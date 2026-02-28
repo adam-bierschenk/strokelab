@@ -60,10 +60,6 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
   // Calculate stats
   const scoreMap = new Map(round.scores.map(s => [s.holeId, s]))
   
-  // Calculate front 9 and back 9
-  const frontNine: (typeof round.scores[0] & { hole: Hole })[] = []
-  const backNine: (typeof round.scores[0] & { hole: Hole })[] = []
-  
   // Fill in scores
   const holesWithScores = round.course.holes.map(hole => {
     const score = scoreMap.get(hole.id)
