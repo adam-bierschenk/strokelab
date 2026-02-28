@@ -110,14 +110,25 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 <p className="text-sm text-gray-600">{formatDate(round.date)}</p>
               </div>
             </div>
-            <div className="text-right">
-              <div className={`text-3xl font-bold ${
-                scoreToPar < 0 ? 'text-green-600' : scoreToPar === 0 ? 'text-gray-900' : 'text-red-600'
-              }`}>
-                {totalScore}
-                <span className="text-lg ml-1">({scoreDisplay})</span>
+            <div className="flex items-center gap-4">
+              <Link
+                href={`/rounds/${round.id}/edit`}
+                className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+              </Link>
+              <div className="text-right">
+                <div className={`text-3xl font-bold ${
+                  scoreToPar < 0 ? 'text-green-600' : scoreToPar === 0 ? 'text-gray-900' : 'text-red-600'
+                }`}>
+                  {totalScore}
+                  <span className="text-lg ml-1">({scoreDisplay})</span>
+                </div>
+                <p className="text-sm text-gray-500">Par {round.course.par}</p>
               </div>
-              <p className="text-sm text-gray-500">Par {round.course.par}</p>
             </div>
           </div>
         </div>
