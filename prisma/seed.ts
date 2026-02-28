@@ -10,13 +10,8 @@ async function main() {
   const whiteEagle = await prisma.course.create({
     data: {
       name: 'White Eagle Golf Club',
-      city: 'Naperville',
-      state: 'IL',
-      country: 'USA',
+      location: 'Naperville, IL',
       par: 72,
-      totalYards: 7012,
-      slope: 135,
-      rating: 74.2,
       holes: {
         create: [
           // Front 9
@@ -50,18 +45,13 @@ async function main() {
   console.log(`Created course: ${whiteEagle.name}`)
   console.log(`  - ${whiteEagle.holes.length} holes`)
   console.log(`  - Par ${whiteEagle.par}`)
-  console.log(`  - ${whiteEagle.totalYards} yards`)
 
   // Additional sample courses for variety
   const courses = [
     {
       name: 'Cog Hill - Dubsdread',
-      city: 'Lemont',
-      state: 'IL',
+      location: 'Lemont, IL',
       par: 72,
-      totalYards: 7243,
-      slope: 142,
-      rating: 75.8,
       holes: [
         { number: 1, par: 4, yardage: 440, handicap: 5 },
         { number: 2, par: 4, yardage: 421, handicap: 9 },
@@ -85,12 +75,8 @@ async function main() {
     },
     {
       name: 'Cantigny Golf',
-      city: 'Wheaton',
-      state: 'IL',
+      location: 'Wheaton, IL',
       par: 71,
-      totalYards: 6789,
-      slope: 132,
-      rating: 73.4,
       holes: [
         { number: 1, par: 4, yardage: 398, handicap: 9 },
         { number: 2, par: 4, yardage: 412, handicap: 5 },
@@ -114,12 +100,8 @@ async function main() {
     },
     {
       name: 'Medinah Country Club - Course No. 3',
-      city: 'Medinah',
-      state: 'IL',
+      location: 'Medinah, IL',
       par: 72,
-      totalYards: 7562,
-      slope: 147,
-      rating: 77.2,
       holes: [
         { number: 1, par: 4, yardage: 438, handicap: 5 },
         { number: 2, par: 4, yardage: 445, handicap: 9 },
@@ -148,12 +130,11 @@ async function main() {
     const course = await prisma.course.create({
       data: {
         ...courseInfo,
-        country: 'USA',
         holes: {
           create: holes.map(h => ({
             number: h.number,
             par: h.par,
-            yardage: h.yards,  // Map 'yards' to 'yardage'
+            yardage: h.yardage,
             handicap: h.handicap
           }))
         }
