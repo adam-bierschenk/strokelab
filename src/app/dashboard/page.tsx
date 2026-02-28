@@ -57,15 +57,9 @@ async function getDashboardStats(): Promise<UserStats> {
     ? puttsRounds.reduce((sum, r) => sum + (r.totalPutts || 0), 0) / puttsRounds.length 
     : null
   
-  const fairwayRounds = rounds.filter(r => r.fairwaysHit !== null)
-  const fairwayPercentage = fairwayRounds.length > 0
-    ? Math.round((fairwayRounds.reduce((sum, r) => sum + (r.fairwaysHit || 0), 0) / (fairwayRounds.length * 14)) * 100)
-    : null
-  
-  const girRounds = rounds.filter(r => r.greensInReg !== null)
-  const girPercentage = girRounds.length > 0
-    ? Math.round((girRounds.reduce((sum, r) => sum + (r.greensInReg || 0), 0) / (girRounds.length * 18)) * 100)
-    : null
+  // TODO: Add fairwaysHit and greensInReg to Round model for advanced stats
+  const fairwayPercentage = null
+  const girPercentage = null
 
   const recentRounds = rounds.slice(0, 5).map(r => ({
     id: r.id,
