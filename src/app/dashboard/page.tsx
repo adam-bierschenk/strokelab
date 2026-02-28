@@ -52,7 +52,7 @@ export default async function DashboardPage() {
             <p className="text-muted-foreground mb-4">
               Enter your score for a new round at White Eagle.
             </p>
-            <Link href="#">
+            <Link href="/rounds/new">
               <Button className="w-full">Enter Score</Button>
             </Link>
           </div>
