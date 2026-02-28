@@ -60,14 +60,19 @@ model VerificationToken {
 }
 
 model Course {
-  id        String   @id @default(cuid())
-  name      String
-  location  String?
-  par       Int
-  holes     Hole[]
-  rounds    Round[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  name        String
+  location    String?
+  city        String?
+  state       String?
+  par         Int
+  totalYards  Int?     @map("total_yards")
+  rating      Float?   // Course rating (e.g., 72.1)
+  slope       Int?     // Slope rating (e.g., 130)
+  holes       Hole[]
+  rounds      Round[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("courses")
 }
@@ -87,30 +92,35 @@ model Hole {
 }
 
 model Round {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courseId  String   @map("course_id")
-  course    Course   @relation(fields: [courseId], references: [id])
-  date      DateTime @default(now())
-  totalScore Int    @default(0) @map("total_score")
-  totalPutts Int    @default(0) @map("total_putts")
-  notes     String?
-  scores    Score[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String   @map("course_id")
+  course      Course   @relation(fields: [courseId], references: [id])
+  date        DateTime @default(now())
+  totalScore  Int      @default(0) @map("total_score")
+  totalPutts  Int      @default(0) @map("total_putts")
+  differential Float?  // USGA differential for handicap calculation
+  fairwaysHit Int?     @map("fairways_hit") // Number of fairways hit
+  greensInReg Int?     @map("greens_in_reg") // Number of greens in regulation
+  notes       String?
+  scores      Score[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("rounds")
 }
 
 model Score {
-  id      String @id @default(cuid())
-  roundId String @map("round_id")
-  round   Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  holeId  String @map("hole_id")
-  hole    Hole   @relation(fields: [holeId], references: [id])
-  score   Int    @default(0)
-  putts   Int    @default(0)
+  id          String @id @default(cuid())
+  roundId     String @map("round_id")
+  round       Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  holeId      String @map("hole_id")
+  hole        Hole   @relation(fields: [holeId], references: [id])
+  score       Int    @default(0)
+  putts       Int    @default(0)
+  fairwayHit  Boolean? @map("fairway_hit") // Did player hit the fairway?
+  greenInReg  Boolean? @map("green_in_reg") // Did player hit GIR?
 
   @@unique([roundId, holeId])
   @@map("scores")
