@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import DeleteRoundButton from './DeleteRoundButton'
 import { Round, Course, Hole, Score } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -110,7 +111,8 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 <p className="text-sm text-gray-600">{formatDate(round.date)}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <DeleteRoundButton roundId={round.id} userId={round.userId} />
               <Link
                 href={`/rounds/${round.id}/edit`}
                 className="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
