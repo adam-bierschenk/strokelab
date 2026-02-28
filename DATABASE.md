@@ -96,8 +96,9 @@ npx prisma migrate reset
 # Open Prisma Studio (GUI for database)
 npx prisma studio
 
-# Seed database (when seed.ts exists)
-npx prisma db seed
+# Seed database with sample courses
+npm run db:seed
+# Or: npx prisma db seed
 ```
 
 ## Deployment
@@ -122,6 +123,30 @@ Make sure these are set in Vercel:
 
 - `prisma/schema.prisma` - Database schema definition
 - `prisma.config.ts` - Prisma configuration
+- `src/lib/prisma.ts` - Prisma client singleton
+- `src/lib/db.ts` - Database helper functions
+
+## Seed Data
+
+The database includes seed data with 4 Chicago-area golf courses:
+
+1. **White Eagle Golf Club** (Naperville, IL) - Par 72, 7,012 yards
+2. **Cog Hill - Dubsdread** (Lemont, IL) - Par 72, 7,243 yards
+3. **Cantigny Golf** (Wheaton, IL) - Par 71, 6,789 yards
+4. **Medinah Country Club - Course No. 3** (Medinah, IL) - Par 72, 7,562 yards
+
+Each course includes:
+- 18 holes with par, yardage, and handicap index
+- Course rating and slope
+- Location information
+
+Run `npm run db:seed` to populate your database with these courses.
+
+## Files
+
+- `prisma/schema.prisma` - Database schema definition
+- `prisma.config.ts` - Prisma configuration
+- `prisma/seed.ts` - Database seed script with course data
 - `src/lib/prisma.ts` - Prisma client singleton
 - `src/lib/db.ts` - Database helper functions
 
