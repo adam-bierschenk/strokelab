@@ -1,7 +1,10 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { auth } from "@/auth"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth()
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -11,9 +14,15 @@ export default function Home() {
             ⛳ StrokeLab
           </h1>
           <nav className="flex items-center gap-4">
-            <Link href="/signin">
-              <Button variant="outline">Sign In</Button>
-            </Link>
+            {session ? (
+              <Link href="/dashboard">
+                <Button variant="outline">Dashboard</Button>
+              </Link>
+            ) : (
+              <Link href="/signin">
+                <Button variant="outline">Sign In</Button>
+              </Link>
+            )}
           </nav>
         </div>
       </header>
@@ -29,16 +38,26 @@ export default function Home() {
             Track your scores, analyze your performance, and take your game to the next level.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signin">
-              <Button size="lg" className="w-full sm:w-auto">
-                Get Started
-              </Button>
-            </Link>
-            <Link href="#features">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Learn More
-              </Button>
-            </Link>
+            {session ? (
+              <Link href="/dashboard">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/signin">
+                  <Button size="lg" className="w-full sm:w-auto">
+                    Get Started
+                  </Button>
+                </Link>
+                <Link href="#features">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                    Learn More
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -88,5 +107,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  );
+  )
 }
