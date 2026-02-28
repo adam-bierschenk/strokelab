@@ -150,7 +150,12 @@ async function main() {
         ...courseInfo,
         country: 'USA',
         holes: {
-          create: holes
+          create: holes.map(h => ({
+            number: h.number,
+            par: h.par,
+            yardage: h.yards,  // Map 'yards' to 'yardage'
+            handicap: h.handicap
+          }))
         }
       },
       include: {
