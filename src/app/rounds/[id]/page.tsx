@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { Round, Course, Hole, Score } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
 interface RoundWithDetails extends Round {
   course: Course & {
     holes: Hole[]

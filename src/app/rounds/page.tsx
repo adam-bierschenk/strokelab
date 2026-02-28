@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Round, Course } from '@prisma/client'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
 // Types
 interface RoundWithCourse extends Round {
   course: Course

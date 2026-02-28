@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
 interface UserStats {
   totalRounds: number
   bestScore: number | null
