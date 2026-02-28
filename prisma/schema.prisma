@@ -1,38 +1,18 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// User model for authentication
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  image         String?
-  emailVerified DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts Account[]
-  sessions Session[]
-  rounds   Round[]
-
-  @@map("users")
-}
-
-// NextAuth models
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @map("user_id")
   type              String
   provider          String
-  providerAccountId String
+  providerAccountId String  @map("provider_account_id")
   refresh_token     String? @db.Text
   access_token      String? @db.Text
   expires_at        Int?
@@ -49,12 +29,25 @@ model Account {
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  rounds        Round[]
+
+  @@map("users")
 }
 
 model VerificationToken {
@@ -63,79 +56,61 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-  @@map("verification_tokens")
+  @@map("verificationtokens")
 }
 
-// Golf Course model
 model Course {
-  id          String   @id @default(cuid())
-  name        String
-  city        String?
-  state       String?
-  country     String   @default("USA")
-  par         Int      @default(72)
-  totalYards  Int?
-  slope       Float?
-  rating      Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  holes Hole[]
-  rounds Round[]
+  id        String   @id @default(cuid())
+  name      String
+  location  String?
+  par       Int
+  holes     Hole[]
+  rounds    Round[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("courses")
 }
 
-// Individual holes for a course
 model Hole {
   id       String @id @default(cuid())
-  courseId String
   number   Int
   par      Int
-  yards    Int?
+  yardage  Int?
   handicap Int?
-
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  scores Score[]
+  courseId String @map("course_id")
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  scores   Score[]
 
   @@unique([courseId, number])
   @@map("holes")
 }
 
-// Golf Round (played by a user)
 model Round {
-  id           String    @id @default(cuid())
-  userId       String
-  courseId     String
-  date         DateTime  @default(now())
-  totalScore   Int
-  totalPutts   Int?
-  fairwaysHit  Int?
-  greensInReg  Int?
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  scores Score[]
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String   @map("course_id")
+  course    Course   @relation(fields: [courseId], references: [id])
+  date      DateTime @default(now())
+  totalScore Int    @default(0) @map("total_score")
+  totalPutts Int    @default(0) @map("total_putts")
+  notes     String?
+  scores    Score[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("rounds")
 }
 
-// Individual hole scores for a round
 model Score {
-  id        String @id @default(cuid())
-  roundId   String
-  holeId    String
-  score     Int
-  putts     Int?
-  fairway   Boolean? // null for par 3s
-  greenInReg Boolean?
-  notes     String?
-
-  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  hole  Hole  @relation(fields: [holeId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  roundId String @map("round_id")
+  round   Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  holeId  String @map("hole_id")
+  hole    Hole   @relation(fields: [holeId], references: [id])
+  score   Int    @default(0)
+  putts   Int    @default(0)
 
   @@unique([roundId, holeId])
   @@map("scores")
