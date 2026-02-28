@@ -30,14 +30,14 @@ export async function createCourse(data: {
   city?: string
   state?: string
   country?: string
-  par?: number
+  par: number
   totalYards?: number
   slope?: number
   rating?: number
   holes?: Array<{
     number: number
     par: number
-    yards?: number
+    yardage?: number
     handicap?: number
   }>
 }) {
