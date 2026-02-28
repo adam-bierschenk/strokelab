@@ -66,9 +66,8 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
     return {
       hole,
       score: score?.score ?? null,
-      putts: score?.putts ?? null,
-      fairway: score?.fairway ?? null,
-      greenInReg: score?.greenInReg ?? null
+      putts: score?.putts ?? null
+      // TODO: Add fairway and greenInReg to Score model for advanced stats
     }
   })
 
