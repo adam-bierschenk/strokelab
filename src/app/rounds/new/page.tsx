@@ -1,24 +1,77 @@
-import Link from 'next/link'
+import { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase-server'
+import { RoundEntryForm } from '@/components/rounds/round-entry-form'
 
-export default function NewRoundPage() {
+export const metadata: Metadata = {
+  title: 'New Round | StrokeLab',
+}
+
+async function getCourses() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    return null
+  }
+
+  const { data: courses, error } = await supabase
+    .from('Course')
+    .select(`
+      id,
+      name,
+      par,
+      holes:Hole (
+        id,
+        holeNumber,
+        par,
+        length
+      )
+    `)
+    .order('name')
+
+  if (error || !courses) {
+    console.error('Error fetching courses:', error)
+    return []
+  }
+
+  // Transform to match component interface
+  return courses.map(course => ({
+    id: course.id,
+    name: course.name,
+    par: course.par,
+    holes: (course.holes || []).map((h: any) => ({
+      id: h.id,
+      number: h.holeNumber,
+      par: h.par,
+      yardage: h.length
+    })).sort((a: any, b: any) => a.number - b.number)
+  }))
+}
+
+export default async function NewRoundPage() {
+  const courses = await getCourses()
+  
+  if (courses === null) {
+    redirect('/signin')
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-          <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">New Round</h1>
+          <p className="text-gray-600">Enter your round scores</p>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Coming Soon</h2>
-        <p className="text-gray-600 mb-6">
-          Round entry is under development. Check back soon!
-        </p>
-        <Link
-          href="/rounds"
-          className="inline-flex items-center px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
-        >
-          Back to Rounds
-        </Link>
+        
+        {courses.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-gray-600 mb-4">No courses available.</p>
+            <p className="text-sm text-gray-500">Please add a course first.</p>
+          </div>
+        ) : (
+          <RoundEntryForm courses={courses} />
+        )}
       </div>
     </div>
   )
