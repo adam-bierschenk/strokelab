@@ -352,6 +352,12 @@ export default async function DashboardPage() {
                     >
                       Family Groups
                     </Link>
+                    <Link
+                      href="/stats"
+                      className="block w-full text-center py-2 px-4 bg-purple-100 text-purple-700 text-sm font-medium rounded-md hover:bg-purple-200 transition-colors"
+                    >
+                      Advanced Stats
+                    </Link>
                   </div>
                 </div>
 

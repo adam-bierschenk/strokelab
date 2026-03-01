@@ -108,6 +108,7 @@ model Round {
   greensInReg Int?     @map("greens_in_reg") // Number of greens in regulation
   notes       String?
   scores      Score[]
+  strokesGained StrokesGained[]
   // Family support: if entered on behalf of another family member
   enteredById String?  @map("entered_by_id")
   visibility  String   @default("private") @map("visibility") // 'private', 'family', 'public'
@@ -171,4 +172,19 @@ model LessonNote {
 
   @@index([userId])
   @@map("lesson_notes")
+}
+
+model StrokesGained {
+  id               String   @id @default(cuid())
+  roundId          String   @map("round_id")
+  round            Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  total            Float    // Total strokes gained for the round
+  offTheTee        Float    @map("off_the_tee") // SG:OTT - drives and par 3 tee shots
+  approach         Float    // SG:APP - approach shots (150+ yards from fairway/rough)
+  aroundGreen      Float    @map("around_green") // SG:ARG - short game (under 30 yards)
+  putting          Float    // SG:P - putting
+  calculatedAt     DateTime @default(now()) @map("calculated_at")
+  
+  @@index([roundId])
+  @@map("strokes_gained")
 }
