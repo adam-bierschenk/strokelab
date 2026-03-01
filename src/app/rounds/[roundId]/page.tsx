@@ -4,6 +4,12 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import DeleteRoundButton from './DeleteRoundButton'
 
+interface ScoreData {
+  fairway?: boolean
+  greenInReg?: boolean
+  putts?: number
+}
+
 export const metadata: Metadata = {
   title: 'Round Details | StrokeLab',
 }
@@ -60,9 +66,9 @@ export default async function RoundDetailPage({ params }: RoundPageProps) {
     notFound()
   }
 
-  const fairwaysHit = round.scores.filter((s: any) => s.fairway).length
-  const greensInReg = round.scores.filter((s: any) => s.greenInReg).length
-  const totalPutts = round.scores.reduce((sum: number, s: any) => sum + (s.putts || 0), 0)
+  const fairwaysHit = round.scores.filter((s: ScoreData) => s.fairway).length
+  const greensInReg = round.scores.filter((s: ScoreData) => s.greenInReg).length
+  const totalPutts = round.scores.reduce((sum: number, s: ScoreData) => sum + (s.putts || 0), 0)
   const toPar = round.totalScore - round.course.par
 
   return (
