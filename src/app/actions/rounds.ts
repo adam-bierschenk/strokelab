@@ -110,6 +110,9 @@ export async function createRound(formData: FormData) {
     const date = formData.get('date') as string
     const notes = formData.get('notes') as string
     const scoresJson = formData.get('scores') as string
+    // Family support
+    const playedForUserId = formData.get('playedForUserId') as string
+    const visibility = (formData.get('visibility') as string) || 'private'
 
     if (!courseId || !date) {
       return { error: 'Course and date are required' }
@@ -124,17 +127,44 @@ export async function createRound(formData: FormData) {
     const totalScore = holeScores.reduce((sum, h) => sum + (h.score || 0), 0)
     const totalPutts = holeScores.reduce((sum, h) => sum + (h.putts || 0), 0)
 
+    // Family support: the round owner is the person it's played for
+    // The enteredById is the current user
+    const roundUserId = playedForUserId || user.id
+    const isFamilyRound = playedForUserId && playedForUserId !== user.id
+
+    // Validation: If entering for a family member, verify they're actually family
+    if (isFamilyRound) {
+      const { data: familyCheck, error: familyError } = await supabase
+        .from('family_members')
+        .select('id')
+        .eq('user_id', roundUserId)
+        .or(`family_group_id.in.(select family_group_id from family_members where user_id.eq.${user.id}))`)
+        .maybeSingle()
+      
+      if (!familyCheck) {
+        return { error: 'Not authorized to enter rounds for this user' }
+      }
+    }
+
     // Create the round
+    const roundData: Record<string, any> = {
+      userId: roundUserId,
+      courseId,
+      date: new Date(date).toISOString(),
+      totalScore,
+      totalPutts,
+      notes: notes || null,
+      visibility,
+    }
+
+    // If entering on behalf of someone else, track who entered it
+    if (isFamilyRound) {
+      roundData.enteredById = user.id
+    }
+
     const { data: round, error: roundError } = await supabase
       .from('Round')
-      .insert({
-        userId: user.id,
-        courseId,
-        date: new Date(date).toISOString(),
-        totalScore,
-        totalPutts,
-        notes: notes || null
-      })
+      .insert(roundData)
       .select()
       .single()
 
@@ -162,6 +192,9 @@ export async function createRound(formData: FormData) {
 
     revalidatePath('/rounds')
     revalidatePath('/dashboard')
+    if (isFamilyRound) {
+      revalidatePath('/family')
+    }
 
     return { success: true, round }
   } catch (error) {
