@@ -1,5 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
+import { supabase } from '@/lib/supabase'
+import SignOutButton from '@/components/SignOutButton'
+import { createClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -17,26 +21,28 @@ interface UserStats {
     totalScore: number
     courseName: string
     coursePar: number
-    date: Date
+    date: string
   }>
 }
 
 async function getDashboardStats(): Promise<UserStats> {
-  const rounds = await prisma.round.findMany({
-    include: {
-      course: {
-        select: {
-          name: true,
-          par: true
-        }
-      }
-    },
-    orderBy: {
-      date: 'desc'
-    }
-  })
+  // Fetch rounds with course data using Supabase
+  const { data: rounds, error } = await supabase
+    .from('Round')
+    .select(`
+      id,
+      totalScore,
+      totalPutts,
+      date,
+      courseId,
+      Courses (
+        name,
+        par
+      )
+    `)
+    .order('date', { ascending: false })
 
-  if (rounds.length === 0) {
+  if (error || !rounds || rounds.length === 0) {
     return {
       totalRounds: 0,
       bestScore: null,
@@ -50,42 +56,38 @@ async function getDashboardStats(): Promise<UserStats> {
   }
 
   const totalRounds = rounds.length
-  const scores = rounds.map(r => r.totalScore)
-  const avgScore = scores.reduce((sum, s) => sum + s, 0) / totalRounds
+  const scores = rounds.map((r: any) => r.totalScore)
+  const avgScore = scores.reduce((sum: number, s: number) => sum + s, 0) / totalRounds
   const bestScore = Math.min(...scores)
-  const bestRound = rounds.find(r => r.totalScore === bestScore)
-  
-  const puttsRounds = rounds.filter(r => r.totalPutts !== null)
-  const avgPutts = puttsRounds.length > 0 
-    ? puttsRounds.reduce((sum, r) => sum + (r.totalPutts || 0), 0) / puttsRounds.length 
-    : null
-  
-  // TODO: Add fairwaysHit and greensInReg to Round model for advanced stats
-  const fairwayPercentage = null
-  const girPercentage = null
+  const bestRound = rounds.find((r: any) => r.totalScore === bestScore)
 
-  const recentRounds = rounds.slice(0, 5).map(r => ({
+  const puttsRounds = rounds.filter((r: any) => r.totalPutts !== null)
+  const avgPutts = puttsRounds.length > 0
+    ? puttsRounds.reduce((sum: number, r: any) => sum + (r.totalPutts || 0), 0) / puttsRounds.length
+    : null
+
+  const recentRounds = rounds.slice(0, 5).map((r: any) => ({
     id: r.id,
     totalScore: r.totalScore,
-    courseName: r.course.name,
-    coursePar: r.course.par,
+    courseName: (r.Courses as any)?.[0]?.name || 'Unknown Course',
+    coursePar: (r.Courses as any)?.[0]?.par || 72,
     date: r.date
   }))
 
   return {
     totalRounds,
     bestScore,
-    bestScoreCourse: bestRound?.course.name || null,
+    bestScoreCourse: (bestRound?.Courses as any)?.[0]?.name || null,
     avgScore,
     avgPutts,
-    fairwayPercentage,
-    girPercentage,
+    fairwayPercentage: null,
+    girPercentage: null,
     recentRounds
   }
 }
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric'
   })
@@ -99,6 +101,13 @@ function scoreVsPar(score: number, par: number): { text: string; color: string }
 }
 
 export default async function DashboardPage() {
+  const supabaseServer = await createClient()
+  const { data: { user } } = await supabaseServer.auth.getUser()
+  
+  if (!user) {
+    redirect('/signin')
+  }
+  
   const stats = await getDashboardStats()
 
   return (
@@ -111,15 +120,19 @@ export default async function DashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
               <p className="text-sm text-gray-600">Track your golf performance</p>
             </div>
-            <Link
-              href="/rounds/new"
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Log Round
-            </Link>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">{user.email}</span>
+              <SignOutButton />
+              <Link
+                href="/rounds/new"
+                className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Log Round
+              </Link>
+            </div>
           </div>
         </div>
       </header>

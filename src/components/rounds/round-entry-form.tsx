@@ -2,7 +2,13 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { createRound } from "@/app/actions/rounds"
+
+async function createRound(formData: FormData) {
+  const data = Object.fromEntries(formData.entries())
+  console.log("Round data:", data)
+  // TODO: Implement actual round creation with Supabase
+  return { success: true }
+}
 
 interface Course {
   id: string

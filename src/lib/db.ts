@@ -1,39 +1,9 @@
-import prisma from './prisma'
-
-// Course operations
-export async function getCourses() {
-  return prisma.course.findMany({
-    include: {
-      holes: {
-        orderBy: { number: 'asc' }
-      },
-      _count: {
-        select: { rounds: true }
-      }
-    }
-  })
-}
-
-export async function getCourseById(id: string) {
-  return prisma.course.findUnique({
-    where: { id },
-    include: {
-      holes: {
-        orderBy: { number: 'asc' }
-      }
-    }
-  })
-}
+import { supabase } from '@/lib/supabase'
 
 export async function createCourse(data: {
   name: string
-  city?: string
-  state?: string
-  country?: string
+  location?: string
   par: number
-  totalYards?: number
-  slope?: number
-  rating?: number
   holes?: Array<{
     number: number
     par: number
@@ -41,124 +11,60 @@ export async function createCourse(data: {
     handicap?: number
   }>
 }) {
-  return prisma.course.create({
-    data: {
-      ...data,
-      holes: data.holes ? {
-        create: data.holes
-      } : undefined
-    },
-    include: {
-      holes: true
-    }
-  })
-}
+  const { data: course, error } = await supabase
+    .from('Courses')
+    .insert({
+      name: data.name,
+      location: data.location,
+      par: data.par
+    })
+    .select()
+    .single()
 
-// Round operations
-export async function getRounds(userId: string) {
-  return prisma.round.findMany({
-    where: { userId },
-    include: {
-      course: true,
-      scores: {
-        include: {
-          hole: true
-        }
-      }
-    },
-    orderBy: { date: 'desc' }
-  })
-}
+  if (error) throw error
 
-export async function getRoundById(id: string, userId: string) {
-  return prisma.round.findFirst({
-    where: { id, userId },
-    include: {
-      course: true,
-      scores: {
-        include: {
-          hole: true
-        },
-        orderBy: {
-          hole: { number: 'asc' }
-        }
-      }
-    }
-  })
-}
+  if (data.holes && course) {
+    const holesToInsert = data.holes.map(h => ({
+      number: h.number,
+      par: h.par,
+      yardage: h.yardage,
+      handicap: h.handicap,
+      courseId: course.id
+    }))
 
-export async function createRound(data: {
-  userId: string
-  courseId: string
-  date?: Date
-  totalScore: number
-  totalPutts?: number
-  fairwaysHit?: number
-  greensInReg?: number
-  notes?: string
-  scores?: Array<{
-    holeId: string
-    score: number
-    putts?: number
-    fairway?: boolean
-    greenInReg?: boolean
-  }>
-}) {
-  return prisma.round.create({
-    data: {
-      ...data,
-      scores: data.scores ? {
-        create: data.scores
-      } : undefined
-    },
-    include: {
-      course: true,
-      scores: {
-        include: {
-          hole: true
-        }
-      }
-    }
-  })
-}
+    const { error: holesError } = await supabase
+      .from('Hole')
+      .insert(holesToInsert)
 
-export async function deleteRound(id: string, userId: string) {
-  return prisma.round.deleteMany({
-    where: { id, userId }
-  })
-}
-
-// Stats calculations
-export async function getUserStats(userId: string) {
-  const rounds = await prisma.round.findMany({
-    where: { userId },
-    include: {
-      scores: true
-    }
-  })
-
-  if (rounds.length === 0) {
-    return null
+    if (holesError) throw holesError
   }
 
-  const totalRounds = rounds.length
-  const avgScore = rounds.reduce((sum, r) => sum + r.totalScore, 0) / totalRounds
-  const avgPutts = rounds.reduce((sum, r) => sum + (r.totalPutts || 0), 0) / totalRounds
-  const bestScore = Math.min(...rounds.map(r => r.totalScore))
-  
-  const fairwaysHit = rounds.reduce((sum, r) => sum + (r.fairwaysHit || 0), 0)
-  const fairwaysPossible = totalRounds * 14 // Assuming 14 fairways per round (excluding par 3s)
-  const fairwayPercentage = fairwaysPossible > 0 ? (fairwaysHit / fairwaysPossible) * 100 : 0
+  return course
+}
 
-  const greensInReg = rounds.reduce((sum, r) => sum + (r.greensInReg || 0), 0)
-  const girPercentage = (greensInReg / (totalRounds * 18)) * 100
+export async function getCourses() {
+  const { data, error } = await supabase
+    .from('Courses')
+    .select(`
+      *,
+      holes:Hole (*)
+    `)
+    .order('name')
 
-  return {
-    totalRounds,
-    avgScore: Math.round(avgScore * 10) / 10,
-    avgPutts: Math.round(avgPutts * 10) / 10,
-    bestScore,
-    fairwayPercentage: Math.round(fairwayPercentage * 10) / 10,
-    girPercentage: Math.round(girPercentage * 10) / 10
-  }
+  if (error) throw error
+  return data || []
+}
+
+export async function getCourseById(id: string) {
+  const { data, error } = await supabase
+    .from('Courses')
+    .select(`
+      *,
+      holes:Hole (*)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data
 }
