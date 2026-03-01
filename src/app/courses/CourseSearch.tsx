@@ -53,14 +53,14 @@ export default function CourseSearch({ initialCourses }: CourseSearchProps) {
         <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
           <span>{initialCourses.length} courses total</span>
           {searchTerm && (
-            <span>{filteredCourses.length} matching "{searchTerm}"</span>
+            <span>{filteredCourses.length} matching &quot;{searchTerm}&quot;</span>
           )}
         </div>
       </div>
 
       {filteredCourses.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-600">No courses found matching "{searchTerm}"</p>
+          <p className="text-gray-600">No courses found matching &quot;{searchTerm}&quot;</p>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">

@@ -3,6 +3,13 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 
+interface HoleData {
+  id: string
+  holeNumber: number
+  par: number
+  length?: number
+}
+
 export const metadata: Metadata = {
   title: 'Course Details | StrokeLab',
 }
@@ -33,7 +40,7 @@ async function getCourse(courseId: string) {
     return null
   }
 
-  const { data: stats, error: statsError } = await supabase
+  const { data: stats } = await supabase
     .from('Round')
     .select('id, totalScore')
     .eq('courseId', courseId)
@@ -45,7 +52,7 @@ async function getCourse(courseId: string) {
 
   return {
     ...course,
-    holes: course.holes?.sort((a: any, b: any) => a.holeNumber - b.holeNumber) || [],
+    holes: course.holes?.sort((a: HoleData, b: HoleData) => a.holeNumber - b.holeNumber) || [],
     bestScore
   }
 }
@@ -62,10 +69,8 @@ export default async function CourseDetailsPage({ params }: Props) {
     notFound()
   }
 
-  const totalLength = course.holes.reduce((sum: number, h: any) => sum + (h.length || 0), 0)
-  const avgHoleLength = course.holes.length > 0 
-    ? Math.round(totalLength / course.holes.length) 
-    : 0
+  const totalLength = course.holes.reduce((sum: number, h: HoleData) => sum + (h.length || 0), 0)
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -127,7 +132,7 @@ export default async function CourseDetailsPage({ params }: Props) {
               <p className="px-6 py-4 text-gray-600">No hole details available</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-                {course.holes.map((hole: any) => (
+                {course.holes.map((hole: HoleData) => (
                   <div key={hole.id} className="px-6 py-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-900">Hole {hole.holeNumber}</span>
