@@ -1,14 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-
-async function createRound(formData: FormData) {
-  const data = Object.fromEntries(formData.entries())
-  console.log("Round data:", data)
-  // TODO: Implement actual round creation with Supabase
-  return { success: true }
-}
+import { createRound as createRoundAction } from "@/app/actions/rounds"
 
 interface Course {
   id: string
@@ -100,11 +95,37 @@ export function RoundEntryForm({ courses }: { courses: Course[] }) {
 
   const { totalScore, totalPutts, holesPlayed } = calculateTotals()
 
+  const router = useRouter()
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitting(true)
     try {
-      await createRound(new FormData(e.currentTarget))
+      const formData = new FormData(e.currentTarget)
+      
+      // Build scores array from form data
+      const scores: {holeId: string, score: number, putts: number}[] = []
+      holeScores.forEach(h => {
+        if (h.score > 0) {
+          scores.push({
+            holeId: h.holeId,
+            score: h.score,
+            putts: h.putts
+          })
+        }
+      })
+      
+      // Add scores to form data as JSON
+      formData.append('scores', JSON.stringify(scores))
+      
+      const result = await createRoundAction(formData)
+      
+      if (result?.error) {
+        console.error("Failed to submit:", result.error)
+        setSubmitting(false)
+      } else if (result?.success && result.round) {
+        router.push(`/rounds/${result.round.id}`)
+      }
     } catch (err) {
       console.error("Failed to submit:", err)
       setSubmitting(false)

@@ -96,3 +96,76 @@ export async function deleteRound(roundId: string) {
     return { error: 'Failed to delete round' }
   }
 }
+
+export async function createRound(formData: FormData) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return { error: 'Not authenticated' }
+    }
+
+    const courseId = formData.get('courseId') as string
+    const date = formData.get('date') as string
+    const notes = formData.get('notes') as string
+    const scoresJson = formData.get('scores') as string
+
+    if (!courseId || !date) {
+      return { error: 'Course and date are required' }
+    }
+
+    // Parse scores from JSON
+    const holeScores: { holeId: string; score: number; putts: number }[] = scoresJson 
+      ? JSON.parse(scoresJson) 
+      : []
+    
+    // Calculate totals
+    const totalScore = holeScores.reduce((sum, h) => sum + (h.score || 0), 0)
+    const totalPutts = holeScores.reduce((sum, h) => sum + (h.putts || 0), 0)
+
+    // Create the round
+    const { data: round, error: roundError } = await supabase
+      .from('Round')
+      .insert({
+        userId: user.id,
+        courseId,
+        date: new Date(date).toISOString(),
+        totalScore,
+        totalPutts,
+        notes: notes || null
+      })
+      .select()
+      .single()
+
+    if (roundError || !round) {
+      return { error: 'Failed to create round' }
+    }
+
+    // Create scores
+    if (holeScores.length > 0) {
+      const { error: scoresError } = await supabase
+        .from('Score')
+        .insert(
+          holeScores.map(hs => ({
+            roundId: round.id,
+            holeId: hs.holeId,
+            score: hs.score,
+            putts: hs.putts
+          }))
+        )
+
+      if (scoresError) {
+        console.error('Error creating scores:', scoresError)
+      }
+    }
+
+    revalidatePath('/rounds')
+    revalidatePath('/dashboard')
+
+    return { success: true, round }
+  } catch (error) {
+    console.error('Error creating round:', error)
+    return { error: 'Failed to create round' }
+  }
+}
