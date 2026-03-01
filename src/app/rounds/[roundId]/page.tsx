@@ -1,156 +1,134 @@
-import { Metadata } from "next"
-import { notFound } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Share2, Trophy, TrendingUp } from "lucide-react"
+import { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { createClient } from '@/lib/supabase-server'
+import DeleteRoundButton from './DeleteRoundButton'
 
-interface PageProps {
-  params: {
-    roundId: string
-  }
+export const metadata: Metadata = {
+  title: 'Round Details | StrokeLab',
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { roundId } = params
+async function getRound(roundId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) return null
 
-  // In production, fetch actual round data
+  const { data: round } = await supabase
+    .from('Round')
+    .select(`
+      *,
+      course:Course (
+        id,
+        name,
+        par
+      )
+    `)
+    .eq('id', roundId)
+    .eq('userId', user.id)
+    .single()
+
+  if (!round) return null
+
+  const { data: scores } = await supabase
+    .from('Score')
+    .select(`
+      *,
+      hole:Hole (
+        holeNumber,
+        par
+      )
+    `)
+    .eq('roundId', roundId)
+
   return {
-    title: "Alex Johnson's Round • StrokeLab",
-    description: "Just played 85 (+13) at White Eagle Golf Club",
-    openGraph: {
-      title: "Alex Johnson's Golf Score",
-      description: "85 (+13) at White Eagle Golf Club",
-      images: [`/rounds/${roundId}/opengraph-image`],
-    },
+    ...round,
+    scores: scores || [],
+    isOwner: round.userId === user.id
   }
 }
 
-// Mock data for round
-const mockRound = {
-  id: "1",
-  userName: "Alex Johnson",
-  courseName: "White Eagle Golf Club",
-  score: 85,
-  par: 72,
-  differential: 12.4,
-  date: "2026-02-28",
-  putts: 32,
-  fairwaysHit: 8,
-  greensInReg: 6,
+interface RoundPageProps {
+  params: Promise<{ roundId: string }>
 }
 
-export default function RoundDetailPage({ params }: PageProps) {
-  // In production: fetch actual round data
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const roundId = params.roundId
-  const round = mockRound
+export default async function RoundDetailPage({ params }: RoundPageProps) {
+  const { roundId } = await params
+  const round = await getRound(roundId)
 
   if (!round) {
     notFound()
   }
 
-  const toPar = round.score - round.par
-  const toParText = toPar > 0 ? `+${toPar}` : toPar.toString()
-  const toParColor = toPar <= 0 ? "text-green-500" : "text-yellow-500"
+  const fairwaysHit = round.scores.filter((s: any) => s.fairway).length
+  const greensInReg = round.scores.filter((s: any) => s.greenInReg).length
+  const totalPutts = round.scores.reduce((sum: number, s: any) => sum + (s.putts || 0), 0)
+  const toPar = round.totalScore - round.course.par
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">⛳ StrokeLab</h1>
-            <nav>
-              <a href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-                ← Back to Dashboard
-              </a>
-            </nav>
+            <Link
+              href="/rounds"
+              className="text-green-600 hover:text-green-800 flex items-center"
+            >
+              ← Back to Rounds
+            </Link>
+            {round.isOwner && (
+              <div className="flex gap-2">
+                <Link
+                  href={`/rounds/${roundId}/edit`}
+                  className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  Edit
+                </Link>
+                <DeleteRoundButton roundId={roundId} />
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Score Card */}
-          <div className="bg-card border border-border rounded-xl p-8 mb-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold">{round.userName}</h2>
-              <p className="text-muted-foreground">{round.courseName}</p>
-              <p className="text-sm text-muted-foreground">{round.date}</p>
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="p-8 text-center border-b border-gray-200">
+            <p className="text-gray-600">{round.course.name}</p>
+            <div className="mt-6 flex justify-center items-baseline gap-4">
+              <span className="text-6xl font-bold text-gray-900">{round.totalScore}</span>
+              <span className={`text-2xl ${toPar <= 0 ? 'text-green-600' : 'text-yellow-600'}`}>
+                {toPar > 0 ? `+${toPar}` : toPar}
+              </span>
             </div>
-
-            <div className="flex items-center justify-center gap-8 mb-8">
-              <div className="text-center">
-                <div className="text-7xl font-bold">{round.score}</div>
-                <div className="text-muted-foreground">Score</div>
-              </div>
-
-              <div className="text-center">
-                <div className={`text-5xl font-bold ${toParColor}`}>{toParText}</div>
-                <div className="text-muted-foreground">To Par</div>
-              </div>
-
-              <div className="text-center">
-                <div className="text-5xl font-bold">{round.differential.toFixed(1)}</div>
-                <div className="text-muted-foreground">Differential</div>
-              </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{round.putts}</div>
-                <div className="text-sm text-muted-foreground">Putts</div>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{round.fairwaysHit}/14</div>
-                <div className="text-sm text-muted-foreground">Fairways</div>
-              </div>
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold">{round.greensInReg}/18</div>
-                <div className="text-sm text-muted-foreground">Greens</div>
-              </div>
-            </div>
-
-            {/* Share Button */}
-            <Button className="w-full" size="lg">
-              <Share2 className="w-5 h-5 mr-2" />
-              Share Score
-            </Button>
           </div>
 
-          {/* Achievement Card (if applicable) */}
-          {round.score <= round.par + 10 && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-green-600 dark:text-green-300" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-green-800 dark:text-green-300">
-                    Great Round!
-                  </h3>
-                  <p className="text-sm text-green-700 dark:text-green-400">
-                    You beat your handicap by {(round.score - round.par - round.differential).toFixed(1)} strokes
-                  </p>
-                </div>
-              </div>
+          <div className="grid grid-cols-4 gap-4 p-6 border-b border-gray-200">
+            <div className="text-center">
+              <p className="text-2xl font-bold">{round.totalPutts || totalPutts}</p>
+              <p className="text-sm text-gray-500">Putts</p>
             </div>
-          )}
-
-          {/* Trend */}
-          <div className="bg-muted rounded-xl p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <TrendingUp className="w-5 h-5 text-muted-foreground" />
-              <h3 className="font-semibold">Recent Trend</h3>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{fairwaysHit}/14</p>
+              <p className="text-sm text-gray-500">Fairways</p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold">+5%</span>
-              <span className="text-green-500">improvement</span>
-              <span className="text-muted-foreground">in last 5 rounds</span>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{greensInReg}/18</p>
+              <p className="text-sm text-gray-500">GIR</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{(round.totalScore - round.course.par).toFixed(1)}</p>
+              <p className="text-sm text-gray-500">Differential</p>
             </div>
           </div>
         </div>
+
+        {round.notes && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium mb-2">Notes</h3>
+            <p className="text-gray-600 whitespace-pre-wrap">{round.notes}</p>
+          </div>
+        )}
       </main>
     </div>
   )
