@@ -50,3 +50,13 @@ export interface GoalProgress {
   percentage: number
   trend: 'up' | 'down' | 'stable'
 }
+
+export interface Photo {
+  id: string
+  roundId: string
+  userId: string
+  url: string
+  caption?: string
+  fileName: string
+  createdAt: string
+}
