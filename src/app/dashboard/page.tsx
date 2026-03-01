@@ -346,6 +346,12 @@ export default async function DashboardPage() {
                     >
                       View Goals
                     </Link>
+                    <Link
+                      href="/family"
+                      className="block w-full text-center py-2 px-4 bg-blue-100 text-blue-700 text-sm font-medium rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                      Family Groups
+                    </Link>
                   </div>
                 </div>
 

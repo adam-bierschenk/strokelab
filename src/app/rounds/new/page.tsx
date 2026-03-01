@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { RoundEntryForm } from '@/components/rounds/round-entry-form'
+import { getUserFamilyGroups } from '@/app/actions/family'
 
 export const metadata: Metadata = {
   title: 'New Round | StrokeLab',
@@ -42,7 +43,7 @@ async function getCourses() {
     par: course.par,
     holes: (course.holes || []).map((h: any) => ({
       id: h.id,
-      number: h.holeNumber,
+      number: h.number,
       par: h.par,
       yardage: h.length
     })).sort((a: any, b: any) => a.number - b.number)
@@ -50,11 +51,29 @@ async function getCourses() {
 }
 
 export default async function NewRoundPage() {
-  const courses = await getCourses()
+  const [courses, familyResult] = await Promise.all([
+    getCourses(),
+    getUserFamilyGroups()
+  ])
   
   if (courses === null) {
     redirect('/signin')
   }
+
+  // Build family members list for "Play as" selector
+  const familyMembers = familyResult.success && familyResult.groups
+    ? familyResult.groups.flatMap(g => 
+        g.members.map(m => ({
+          userId: m.userId,
+          name: m.name || m.email,
+          email: m.email,
+          groupName: g.name
+        }))
+      ).filter((m, i, self) => 
+        // Remove duplicates (user might be in multiple groups)
+        self.findIndex(t => t.userId === m.userId) === i
+      )
+    : []
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -70,7 +89,7 @@ export default async function NewRoundPage() {
             <p className="text-sm text-gray-500">Please add a course first.</p>
           </div>
         ) : (
-          <RoundEntryForm courses={courses} />
+          <RoundEntryForm courses={courses} familyMembers={familyMembers} />
         )}
       </div>
     </div>

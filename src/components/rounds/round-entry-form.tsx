@@ -17,6 +17,13 @@ interface Course {
   }[]
 }
 
+interface FamilyMember {
+  userId: string
+  name: string
+  email: string
+  groupName: string
+}
+
 interface HoleScore {
   holeId: string
   number: number
@@ -26,7 +33,12 @@ interface HoleScore {
   putts: number
 }
 
-export function RoundEntryForm({ courses }: { courses: Course[] }) {
+interface RoundEntryFormProps {
+  courses: Course[]
+  familyMembers?: FamilyMember[]
+}
+
+export function RoundEntryForm({ courses, familyMembers = [] }: RoundEntryFormProps) {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(
     courses[0] || null
   )
@@ -47,6 +59,10 @@ export function RoundEntryForm({ courses }: { courses: Course[] }) {
   })
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  
+  // Family support
+  const [playedForUserId, setPlayedForUserId] = useState<string>("")
+  const [visibility, setVisibility] = useState<"private" | "family" | "public">("private")
 
   const handleCourseChange = (courseId: string) => {
     const course = courses.find((c) => c.id === courseId)
@@ -118,6 +134,12 @@ export function RoundEntryForm({ courses }: { courses: Course[] }) {
       // Add scores to form data as JSON
       formData.append('scores', JSON.stringify(scores))
       
+      // Add family-related fields
+      if (playedForUserId) {
+        formData.append('playedForUserId', playedForUserId)
+      }
+      formData.append('visibility', visibility)
+      
       const result = await createRoundAction(formData)
       
       if (result?.error) {
@@ -133,6 +155,11 @@ export function RoundEntryForm({ courses }: { courses: Course[] }) {
   }
 
   const currentHoleData = holeScores[currentHole]
+
+  // Get unique family members (remove duplicates from multiple groups)
+  const uniqueFamilyMembers = familyMembers.filter((m, i, self) => 
+    self.findIndex(t => t.userId === m.userId) === i
+  )
 
   return (
     <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
@@ -152,6 +179,30 @@ export function RoundEntryForm({ courses }: { courses: Course[] }) {
           />
         </div>
       ))}
+
+      {/* Family Member Selection */}
+      {uniqueFamilyMembers.length > 0 && (
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <label className="block text-sm font-medium text-blue-900 mb-2">
+            Playing as
+          </label>
+          <select
+            value={playedForUserId}
+            onChange={(e) => setPlayedForUserId(e.target.value)}
+            className="w-full p-2 border border-blue-300 rounded-lg bg-white text-blue-900"
+          >
+            <option value="">Myself</option>
+            {uniqueFamilyMembers.map((member) => (
+              <option key={member.userId} value={member.userId}>
+                {member.name} ({member.groupName})
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-blue-600">
+            Enter a score on behalf of a family member
+          </p>
+        </div>
+      )}
 
       {/* Course Selection */}
       <div className="mb-6">
@@ -185,6 +236,34 @@ export function RoundEntryForm({ courses }: { courses: Course[] }) {
           className="w-full p-3 border border-border rounded-lg bg-background text-foreground"
           required
         />
+      </div>
+
+      {/* Visibility */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Visibility
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { value: 'private', label: 'Private', desc: 'Only you' },
+            { value: 'family', label: 'Family', desc: 'Family members' },
+            { value: 'public', label: 'Public', desc: 'Everyone' },
+          ].map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setVisibility(option.value as typeof visibility)}
+              className={`p-3 rounded-lg border text-center transition-colors ${
+                visibility === option.value
+                  ? 'border-green-500 bg-green-50 text-green-700'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="font-medium text-sm">{option.label}</div>
+              <div className="text-xs text-gray-500">{option.desc}</div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Progress */}
