@@ -90,7 +90,7 @@ export async function getAvailableCourses() {
   const supabase = await createClient()
   
   const { data: courses, error } = await supabase
-    .from('Course')
+    .from('courses')
     .select('id, name, city, state')
     .order('name')
   

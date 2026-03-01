@@ -18,12 +18,12 @@ interface Round {
 
 async function getRounds(): Promise<Round[]> {
   const { data: rounds, error } = await supabase
-    .from('Round')
+    .from('rounds')
     .select(`
       id,
       totalScore,
       date,
-      Courses (
+      courses (
         name,
         par
       )
@@ -38,11 +38,11 @@ async function getRounds(): Promise<Round[]> {
   return rounds.map((round: any) => ({
     id: round.id,
     totalScore: round.totalScore,
-    coursePar: (round.Courses as any)?.[0]?.par || 72,
+    coursePar: (round.courses as any)?.[0]?.par || 72,
     date: round.date,
     course: {
-      name: (round.Courses as any)?.[0]?.name || 'Unknown Course',
-      par: (round.Courses as any)?.[0]?.par || 72
+      name: (round.courses as any)?.[0]?.name || 'Unknown Course',
+      par: (round.courses as any)?.[0]?.par || 72
     }
   }))
 }

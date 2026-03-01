@@ -22,7 +22,7 @@ export async function exportRoundsToCSV(): Promise<{ data?: string; error?: stri
   }
 
   const { data: rounds, error } = await supabase
-    .from('Round')
+    .from('rounds')
     .select(`
       id,
       date,
@@ -31,7 +31,7 @@ export async function exportRoundsToCSV(): Promise<{ data?: string; error?: stri
       fairwaysHit,
       greensInReg,
       notes,
-      course:Course (
+      course:courses (
         name
       )
     `)
@@ -75,7 +75,7 @@ export async function getRoundsForPDF(): Promise<{ rounds?: any[]; error?: strin
   }
 
   const { data: rounds, error } = await supabase
-    .from('Round')
+    .from('rounds')
     .select(`
       id,
       date,
@@ -84,7 +84,7 @@ export async function getRoundsForPDF(): Promise<{ rounds?: any[]; error?: strin
       fairwaysHit,
       greensInReg,
       notes,
-      course:Course (
+      course:courses (
         name,
         par
       )
@@ -108,7 +108,7 @@ export async function getStatsForExport(): Promise<{ stats?: any; error?: string
   }
 
   const { data: rounds, error } = await supabase
-    .from('Round')
+    .from('rounds')
     .select('totalScore, totalPutts, fairwaysHit, greensInReg')
     .eq('userId', user.id)
 

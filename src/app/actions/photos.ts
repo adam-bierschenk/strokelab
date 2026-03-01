@@ -19,7 +19,7 @@ export async function uploadRoundPhoto(data: UploadPhotoData) {
 
   // Verify round ownership
   const { data: round } = await supabase
-    .from('Round')
+    .from('rounds')
     .select('userId')
     .eq('id', data.roundId)
     .single()
@@ -55,7 +55,7 @@ export async function uploadRoundPhoto(data: UploadPhotoData) {
 
     // Save photo record to database
     const { data: photo, error: dbError } = await supabase
-      .from('Photo')
+      .from('photos')
       .insert({
         roundId: data.roundId,
         userId: user.id,
@@ -90,7 +90,7 @@ export async function deleteRoundPhoto(photoId: string) {
 
   // Get photo details
   const { data: photo } = await supabase
-    .from('Photo')
+    .from('photos')
     .select('userId, fileName, roundId')
     .eq('id', photoId)
     .single()
@@ -106,7 +106,7 @@ export async function deleteRoundPhoto(photoId: string) {
 
   // Delete from database
   const { error } = await supabase
-    .from('Photo')
+    .from('photos')
     .delete()
     .eq('id', photoId)
 
@@ -127,7 +127,7 @@ export async function getRoundPhotos(roundId: string) {
   }
 
   const { data: photos, error } = await supabase
-    .from('Photo')
+    .from('photos')
     .select('*')
     .eq('roundId', roundId)
     .order('createdAt', { ascending: false })

@@ -22,10 +22,10 @@ async function getRound(roundId: string) {
   if (!user) return null
 
   const { data: round } = await supabase
-    .from('Round')
+    .from('rounds')
     .select(`
       *,
-      course:Course (
+      course:courses (
         id,
         name,
         par
@@ -38,10 +38,10 @@ async function getRound(roundId: string) {
   if (!round) return null
 
   const { data: scores } = await supabase
-    .from('Score')
+    .from('scores')
     .select(`
       *,
-      hole:Hole (
+      hole:holes (
         holeNumber,
         par
       )
@@ -49,7 +49,7 @@ async function getRound(roundId: string) {
     .eq('roundId', roundId)
 
   const { data: photos } = await supabase
-    .from('Photo')
+    .from('photos')
     .select('*')
     .eq('roundId', roundId)
     .order('createdAt', { ascending: false })

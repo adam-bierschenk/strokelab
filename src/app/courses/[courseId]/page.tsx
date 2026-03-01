@@ -22,12 +22,12 @@ async function getCourse(courseId: string) {
   if (!user) return null
 
   const { data: course, error: courseError } = await supabase
-    .from('Course')
+    .from('courses')
     .select(`
       id,
       name,
       par,
-      holes:Hole (
+      holes:holes (
         id,
         holeNumber,
         par,
@@ -43,7 +43,7 @@ async function getCourse(courseId: string) {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: stats, error: _statsError } = await supabase
-    .from('Round')
+    .from('rounds')
     .select('id, totalScore')
     .eq('courseId', courseId)
     .eq('userId', user.id)

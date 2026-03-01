@@ -32,7 +32,7 @@ export async function createGoal(data: CreateGoalData) {
   }
 
   const { data: goal, error } = await supabase
-    .from('Goal')
+    .from('goals')
     .insert({
       userId: user.id,
       type: data.type,
@@ -64,7 +64,7 @@ export async function updateGoal(data: UpdateGoalData) {
 
   // Verify ownership
   const { data: existingGoal } = await supabase
-    .from('Goal')
+    .from('goals')
     .select('userId')
     .eq('id', data.id)
     .single()
@@ -81,7 +81,7 @@ export async function updateGoal(data: UpdateGoalData) {
   if (data.status !== undefined) updateData.status = data.status
 
   const { data: goal, error } = await supabase
-    .from('Goal')
+    .from('goals')
     .update(updateData)
     .eq('id', data.id)
     .select()
@@ -105,7 +105,7 @@ export async function deleteGoal(goalId: string) {
 
   // Verify ownership
   const { data: existingGoal } = await supabase
-    .from('Goal')
+    .from('goals')
     .select('userId')
     .eq('id', goalId)
     .single()
@@ -115,7 +115,7 @@ export async function deleteGoal(goalId: string) {
   }
 
   const { error } = await supabase
-    .from('Goal')
+    .from('goals')
     .delete()
     .eq('id', goalId)
 
@@ -136,7 +136,7 @@ export async function getGoals() {
   }
 
   const { data: goals, error } = await supabase
-    .from('Goal')
+    .from('goals')
     .select('*')
     .eq('userId', user.id)
     .order('createdAt', { ascending: false })
@@ -147,7 +147,7 @@ export async function getGoals() {
 
   // Calculate current values based on rounds
   const { data: rounds } = await supabase
-    .from('Round')
+    .from('rounds')
     .select('totalScore, fairwaysHit, greensInReg, totalPutts')
     .eq('userId', user.id)
 

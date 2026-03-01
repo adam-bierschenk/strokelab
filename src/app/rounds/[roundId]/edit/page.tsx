@@ -15,14 +15,14 @@ async function getRound(roundId: string) {
   if (!user) return null
 
   const { data: round } = await supabase
-    .from('Round')
+    .from('rounds')
     .select(`
       id,
       totalScore,
       totalPutts,
       notes,
       roundDate,
-      course:Course (
+      course:courses (
         id,
         name,
         par

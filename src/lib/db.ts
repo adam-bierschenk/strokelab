@@ -12,7 +12,7 @@ export async function createCourse(data: {
   }>
 }) {
   const { data: course, error } = await supabase
-    .from('Courses')
+    .from('courses')
     .insert({
       name: data.name,
       location: data.location,
@@ -33,7 +33,7 @@ export async function createCourse(data: {
     }))
 
     const { error: holesError } = await supabase
-      .from('Hole')
+      .from('holes')
       .insert(holesToInsert)
 
     if (holesError) throw holesError
@@ -44,10 +44,10 @@ export async function createCourse(data: {
 
 export async function getCourses() {
   const { data, error } = await supabase
-    .from('Courses')
+    .from('courses')
     .select(`
       *,
-      holes:Hole (*)
+      holes:holes (*)
     `)
     .order('name')
 
@@ -57,10 +57,10 @@ export async function getCourses() {
 
 export async function getCourseById(id: string) {
   const { data, error } = await supabase
-    .from('Courses')
+    .from('courses')
     .select(`
       *,
-      holes:Hole (*)
+      holes:holes (*)
     `)
     .eq('id', id)
     .single()

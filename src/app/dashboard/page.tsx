@@ -49,14 +49,14 @@ interface UserStats {
 async function getDashboardStats(): Promise<UserStats> {
   // Fetch rounds with course data using Supabase
   const { data: rounds, error } = await supabase
-    .from('Round')
+    .from('rounds')
     .select(`
       id,
       totalScore,
       totalPutts,
       date,
       courseId,
-      Courses (
+      courses (
         name,
         par
       )
@@ -93,8 +93,8 @@ async function getDashboardStats(): Promise<UserStats> {
   const recentRounds = rounds.slice(0, 5).map((r: any) => ({
     id: r.id,
     totalScore: r.totalScore,
-    courseName: (r.Courses as any)?.[0]?.name || 'Unknown Course',
-    coursePar: (r.Courses as any)?.[0]?.par || 72,
+    courseName: (r.courses as any)?.[0]?.name || 'Unknown Course',
+    coursePar: (r.courses as any)?.[0]?.par || 72,
     date: r.date
   }))
 
@@ -105,15 +105,15 @@ async function getDashboardStats(): Promise<UserStats> {
     .map((r: any) => ({
       date: r.date,
       score: r.totalScore,
-      par: (r.Courses as any)?.[0]?.par || 72,
-      course: (r.Courses as any)?.[0]?.name || 'Unknown'
+      par: (r.courses as any)?.[0]?.par || 72,
+      course: (r.courses as any)?.[0]?.name || 'Unknown'
     }))
 
   // Chart data: course averages
   const courseStats: Record<string, { total: number; count: number; par: number }> = {}
   rounds.forEach((r: any) => {
-    const name = (r.Courses as any)?.[0]?.name || 'Unknown'
-    const par = (r.Courses as any)?.[0]?.par || 72
+    const name = (r.courses as any)?.[0]?.name || 'Unknown'
+    const par = (r.courses as any)?.[0]?.par || 72
     if (!courseStats[name]) {
       courseStats[name] = { total: 0, count: 0, par }
     }
@@ -135,13 +135,13 @@ async function getDashboardStats(): Promise<UserStats> {
     .map((r: any) => ({
       date: r.date,
       putts: r.totalPutts,
-      course: (r.Courses as any)?.[0]?.name || 'Unknown'
+      course: (r.courses as any)?.[0]?.name || 'Unknown'
     }))
 
   return {
     totalRounds,
     bestScore,
-    bestScoreCourse: (bestRound?.Courses as any)?.[0]?.name || null,
+    bestScoreCourse: (bestRound?.courses as any)?.[0]?.name || null,
     avgScore,
     avgPutts,
     fairwayPercentage: null,

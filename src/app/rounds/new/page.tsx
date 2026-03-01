@@ -17,12 +17,12 @@ async function getCourses() {
   }
 
   const { data: courses, error } = await supabase
-    .from('Course')
+    .from('courses')
     .select(`
       id,
       name,
       par,
-      holes:Hole (
+      holes:holes (
         id,
         holeNumber,
         par,

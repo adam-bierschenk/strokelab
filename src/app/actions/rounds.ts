@@ -23,7 +23,7 @@ export async function updateRound(data: UpdateRoundData) {
 
     // Verify ownership
     const { data: existingRound, error: findError } = await supabase
-      .from('Round')
+      .from('rounds')
       .select('id, userId')
       .eq('id', data.id)
       .eq('userId', user.id)
@@ -34,7 +34,7 @@ export async function updateRound(data: UpdateRoundData) {
     }
 
     const { error } = await supabase
-      .from('Round')
+      .from('rounds')
       .update({
         totalScore: data.totalScore,
         totalPutts: data.totalPutts || 0,
@@ -66,7 +66,7 @@ export async function deleteRound(roundId: string) {
 
     // Verify ownership
     const { data: existingRound, error: findError } = await supabase
-      .from('Round')
+      .from('rounds')
       .select('id, userId')
       .eq('id', roundId)
       .eq('userId', user.id)
@@ -77,11 +77,11 @@ export async function deleteRound(roundId: string) {
     }
 
     // Delete scores first
-    await supabase.from('Score').delete().eq('roundId', roundId)
+    await supabase.from('scores').delete().eq('roundId', roundId)
 
     // Delete round
     const { error } = await supabase
-      .from('Round')
+      .from('rounds')
       .delete()
       .eq('id', roundId)
 
@@ -163,7 +163,7 @@ export async function createRound(formData: FormData) {
     }
 
     const { data: round, error: roundError } = await supabase
-      .from('Round')
+      .from('rounds')
       .insert(roundData)
       .select()
       .single()
@@ -175,7 +175,7 @@ export async function createRound(formData: FormData) {
     // Create scores
     if (holeScores.length > 0) {
       const { error: scoresError } = await supabase
-        .from('Score')
+        .from('scores')
         .insert(
           holeScores.map(hs => ({
             roundId: round.id,
