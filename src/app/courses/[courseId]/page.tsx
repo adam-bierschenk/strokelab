@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import WeatherWidget from '@/components/WeatherWidget'
 
 interface HoleData {
   id: string
@@ -122,6 +123,16 @@ export default async function CourseDetailsPage({ params }: Props) {
             </Link>
           </div>
         </div>
+
+        {/* Weather Widget */}
+        {course.lat && course.lon && (
+          <WeatherWidget 
+            lat={course.lat} 
+            lon={course.lon} 
+            courseName={course.name}
+            showForecast={true}
+          />
+        )}
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
