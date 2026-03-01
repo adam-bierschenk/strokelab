@@ -59,7 +59,7 @@ async function getDashboardStats(): Promise<UserStats> {
   const scores = rounds.map((r: any) => r.totalScore)
   const avgScore = scores.reduce((sum: number, s: number) => sum + s, 0) / totalRounds
   const bestScore = Math.min(...scores)
-  const bestRound = rounds.find((r: any) => r.totalScore === bestScore)
+  const bestRound: any = rounds.find((r: any) => r.totalScore === bestScore)
 
   const puttsRounds = rounds.filter((r: any) => r.totalPutts !== null)
   const avgPutts = puttsRounds.length > 0
