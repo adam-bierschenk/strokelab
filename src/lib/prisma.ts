@@ -1,19 +1,12 @@
 import { PrismaClient } from '@prisma/client'
-import { PrismaNeon } from '@prisma/adapter-neon'
 import { Pool } from '@neondatabase/serverless'
+import { PrismaNeon } from '@prisma/adapter-neon'
+
+const neon = new Pool({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaNeon(neon)
 
 const prismaClientSingleton = () => {
-  // Use Neon adapter in production/Vercel
-  if (process.env.DATABASE_URL) {
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const adapter = new PrismaNeon(pool as any)
-    return new PrismaClient({ adapter })
-  }
-  
-  return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  })
+  return new PrismaClient({ adapter })
 }
 
 declare const globalThis: {
