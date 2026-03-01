@@ -1,20 +1,124 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 
-export async function createRound(formData: FormData) {
-  try {
-    const courseId = formData.get('courseId') as string
-    const date = formData.get('date') as string
-    const notes = formData.get('notes') as string
+interface UpdateRoundData {
+  id: string
+  userId: string
+  totalScore: number
+  totalPutts?: number
+  fairwaysHit?: number
+  greensInReg?: number
+  notes?: string
+}
 
+export async function updateRound(data: UpdateRoundData) {
+  try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       return { error: 'Not authenticated' }
     }
+
+    const { id, ...roundData } = data
+
+    // Verify the round belongs to the user
+    const { data: existingRound, error: findError } = await supabase
+      .from('Round')
+      .select('id')
+      .eq('id', id)
+      .eq('userId', user.id)
+      .single()
+
+    if (findError || !existingRound) {
+      return { error: 'Round not found' }
+    }
+
+    // Update the round
+    const { data: updatedRound, error: updateError } = await supabase
+      .from('Round')
+      .update(roundData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (updateError) {
+      return { error: 'Failed to update round' }
+    }
+
+    revalidatePath('/rounds')
+    revalidatePath(`/rounds/${id}`)
+    revalidatePath('/dashboard')
+
+    return { success: true, round: updatedRound }
+  } catch (error) {
+    console.error('Error updating round:', error)
+    return { error: 'Failed to update round' }
+  }
+}
+
+export async function deleteRound(roundId: string) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return { error: 'Not authenticated' }
+    }
+
+    // Verify the round belongs to the user
+    const { data: existingRound, error: findError } = await supabase
+      .from('Round')
+      .select('id')
+      .eq('id', roundId)
+      .eq('userId', user.id)
+      .single()
+
+    if (findError || !existingRound) {
+      return { error: 'Round not found' }
+    }
+
+    // Delete related scores first
+    await supabase
+      .from('Score')
+      .delete()
+      .eq('roundId', roundId)
+
+    // Delete the round
+    const { error: deleteError } = await supabase
+      .from('Round')
+      .delete()
+      .eq('id', roundId)
+
+    if (deleteError) {
+      return { error: 'Failed to delete round' }
+    }
+
+    revalidatePath('/rounds')
+    revalidatePath('/dashboard')
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting round:', error)
+    return { error: 'Failed to delete round' }
+  }
+}
+
+export async function createRound(formData: FormData) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return { error: 'Not authenticated' }
+    }
+
+    const courseId = formData.get('courseId') as string
+    const date = formData.get('date') as string
+    const notes = formData.get('notes') as string
 
     // Get hole scores from form data
     const holeScores: { holeId: string; score: number; putts: number }[] = []
@@ -37,7 +141,7 @@ export async function createRound(formData: FormData) {
       }
     }
 
-    // Create round
+    // Create the round
     const { data: round, error: roundError } = await supabase
       .from('Round')
       .insert({
@@ -52,7 +156,7 @@ export async function createRound(formData: FormData) {
       .single()
 
     if (roundError || !round) {
-      return { error: roundError?.message || 'Failed to create round' }
+      return { error: 'Failed to create round' }
     }
 
     // Create scores
@@ -69,7 +173,7 @@ export async function createRound(formData: FormData) {
         )
 
       if (scoresError) {
-        return { error: scoresError.message }
+        console.error('Error creating scores:', scoresError)
       }
     }
 
@@ -80,107 +184,5 @@ export async function createRound(formData: FormData) {
   } catch (error) {
     console.error('Error creating round:', error)
     return { error: 'Failed to create round' }
-  }
-}
-
-interface UpdateRoundData {
-  id: string
-  totalScore: number
-  totalPutts?: number
-  notes?: string
-}
-
-export async function updateRound(data: UpdateRoundData) {
-  try {
-    const { id, ...roundData } = data
-
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return { error: 'Not authenticated' }
-    }
-
-    // Verify the round belongs to the user
-    const { data: existingRound } = await supabase
-      .from('Round')
-      .select('id, userId')
-      .eq('id', id)
-      .single()
-
-    if (!existingRound || existingRound.userId !== user.id) {
-      return { error: 'Round not found' }
-    }
-
-    // Update the round
-    const { data: round, error } = await supabase
-      .from('Round')
-      .update({
-        totalScore: roundData.totalScore,
-        totalPutts: roundData.totalPutts || null,
-        notes: roundData.notes || null
-      })
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      return { error: error.message }
-    }
-
-    revalidatePath('/rounds')
-    revalidatePath(`/rounds/${id}`)
-    revalidatePath('/dashboard')
-
-    return { success: true, round }
-  } catch (error) {
-    console.error('Error updating round:', error)
-    return { error: 'Failed to update round' }
-  }
-}
-
-export async function deleteRound(roundId: string) {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return { error: 'Not authenticated' }
-    }
-
-    // Verify the round belongs to the user
-    const { data: existingRound } = await supabase
-      .from('Round')
-      .select('id, userId')
-      .eq('id', roundId)
-      .single()
-
-    if (!existingRound || existingRound.userId !== user.id) {
-      return { error: 'Round not found' }
-    }
-
-    // Delete scores first (cascade should handle this, but being explicit)
-    await supabase
-      .from('Score')
-      .delete()
-      .eq('roundId', roundId)
-
-    // Delete the round
-    const { error } = await supabase
-      .from('Round')
-      .delete()
-      .eq('id', roundId)
-
-    if (error) {
-      return { error: error.message }
-    }
-
-    revalidatePath('/rounds')
-    revalidatePath('/dashboard')
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error deleting round:', error)
-    return { error: 'Failed to delete round' }
   }
 }
