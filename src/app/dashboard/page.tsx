@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
+import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -10,82 +13,73 @@ interface UserStats {
   bestScoreCourse: string | null
   avgScore: number | null
   avgPutts: number | null
-  fairwayPercentage: number | null
-  girPercentage: number | null
   recentRounds: Array<{
     id: string
     totalScore: number
     courseName: string
     coursePar: number
-    date: Date
+    date: string
   }>
 }
 
 async function getDashboardStats(): Promise<UserStats> {
-  const rounds = await prisma.round.findMany({
-    include: {
-      course: {
-        select: {
-          name: true,
-          par: true
-        }
-      }
-    },
-    orderBy: {
-      date: 'desc'
-    }
-  })
+  const { data: rounds, error } = await supabase
+    .from('Round')
+    .select(`
+      id,
+      totalScore,
+      totalPutts,
+      date,
+      courseId,
+      Courses (
+        name,
+        par
+      )
+    `)
+    .order('date', { ascending: false })
 
-  if (rounds.length === 0) {
+  if (error || !rounds || rounds.length === 0) {
     return {
       totalRounds: 0,
       bestScore: null,
       bestScoreCourse: null,
       avgScore: null,
       avgPutts: null,
-      fairwayPercentage: null,
-      girPercentage: null,
       recentRounds: []
     }
   }
 
   const totalRounds = rounds.length
-  const scores = rounds.map(r => r.totalScore)
-  const avgScore = scores.reduce((sum, s) => sum + s, 0) / totalRounds
+  const scores = rounds.map((r: any) => r.totalScore)
+  const avgScore = scores.reduce((sum: number, s: number) => sum + s, 0) / totalRounds
   const bestScore = Math.min(...scores)
-  const bestRound = rounds.find(r => r.totalScore === bestScore)
-  
-  const puttsRounds = rounds.filter(r => r.totalPutts !== null)
-  const avgPutts = puttsRounds.length > 0 
-    ? puttsRounds.reduce((sum, r) => sum + (r.totalPutts || 0), 0) / puttsRounds.length 
-    : null
-  
-  // TODO: Add fairwaysHit and greensInReg to Round model for advanced stats
-  const fairwayPercentage = null
-  const girPercentage = null
+  const bestRound = rounds.find((r: any) => r.totalScore === bestScore)
 
-  const recentRounds = rounds.slice(0, 5).map(r => ({
+  const puttsRounds = rounds.filter((r: any) => r.totalPutts !== null)
+  const avgPutts = puttsRounds.length > 0
+    ? puttsRounds.reduce((sum: number, r: any) => sum + (r.totalPutts || 0), 0) / puttsRounds.length
+    : null
+
+  const recentRounds = rounds.slice(0, 5).map((r: any) => ({
     id: r.id,
     totalScore: r.totalScore,
-    courseName: r.course.name,
-    coursePar: r.course.par,
+    courseName: (r.Courses as any)?.[0]?.name || 'Unknown Course',
+    coursePar: (r.Courses as any)?.[0]?.par || 72,
     date: r.date
   }))
 
   return {
     totalRounds,
     bestScore,
-    bestScoreCourse: bestRound?.course.name || null,
+    bestScoreCourse: (bestRound?.Courses as any)?.[0]?.name || null,
     avgScore,
     avgPutts,
-    fairwayPercentage,
-    girPercentage,
     recentRounds
   }
 }
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric'
   })
@@ -99,11 +93,17 @@ function scoreVsPar(score: number, par: number): { text: string; color: string }
 }
 
 export default async function DashboardPage() {
+  const supabaseServer = await createClient()
+  const { data: { user } } = await supabaseServer.auth.getUser()
+  
+  if (!user) {
+    redirect('/signin')
+  }
+  
   const stats = await getDashboardStats()
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -124,10 +124,8 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {stats.totalRounds === 0 ? (
-          /* Empty State */
           <div className="text-center py-16 bg-white rounded-xl shadow">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
               <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,7 +145,6 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <>
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
               <StatCard
                 label="Rounds Played"
@@ -172,20 +169,18 @@ export default async function DashboardPage() {
                 icon="⛳"
               />
               <StatCard
-                label="Fairways %"
-                value={stats.fairwayPercentage !== null ? `${stats.fairwayPercentage}%` : '-'}
-                icon="🎯"
+                label="Best Score"
+                value={stats.bestScore ?? '-'}
+                icon="🏆"
               />
               <StatCard
-                label="GIR %"
-                value={stats.girPercentage !== null ? `${stats.girPercentage}%` : '-'}
-                icon="🟢"
+                label="Avg Score"
+                value={stats.avgScore?.toFixed(1) ?? '-'}
+                icon="📊"
               />
             </div>
 
-            {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Recent Rounds */}
               <div className="lg:col-span-2">
                 <div className="bg-white rounded-xl shadow">
                   <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -229,9 +224,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
 
-              {/* Quick Links & Info */}
               <div className="space-y-6">
-                {/* Quick Actions */}
                 <div className="bg-white rounded-xl shadow p-6">
                   <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
                     Quick Actions
@@ -252,7 +245,6 @@ export default async function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Stats Summary */}
                 <div className="bg-white rounded-xl shadow p-6">
                   <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
                     Performance Summary

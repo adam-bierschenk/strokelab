@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
+import prisma from '@/lib/prisma'
 import DeleteRoundButton from './DeleteRoundButton'
 import { Round, Course, Hole, Score } from '@prisma/client'
 
@@ -71,7 +71,10 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
       hole,
       score: score?.score ?? null,
       putts: score?.putts ?? null
+<<<<<<< HEAD
       // TODO: Add fairway and greenInReg to Score model for advanced stats
+=======
+>>>>>>> 816cf2c (fix: resolve build errors for Vercel deployment)
     }
   })
 
@@ -256,20 +259,6 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 label="Putts" 
                 value={round.totalPutts} 
                 subtext={`${(round.totalPutts / 18).toFixed(1)} avg/hole`}
-              />
-            )}
-            {round.fairwaysHit !== null && (
-              <StatCard 
-                label="Fairways Hit" 
-                value={`${round.fairwaysHit}/14`}
-                subtext={`${Math.round((round.fairwaysHit / 14) * 100)}%`}
-              />
-            )}
-            {round.greensInReg !== null && (
-              <StatCard 
-                label="Greens in Reg" 
-                value={`${round.greensInReg}/18`}
-                subtext={`${Math.round((round.greensInReg / 18) * 100)}%`}
               />
             )}
             <StatCard 

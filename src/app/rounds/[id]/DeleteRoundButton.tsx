@@ -30,7 +30,7 @@ export default function DeleteRoundButton({ roundId, userId }: DeleteRoundButton
         router.push('/rounds')
         router.refresh()
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
       setIsDeleting(false)
       setIsConfirming(false)

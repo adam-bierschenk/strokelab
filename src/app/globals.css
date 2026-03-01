@@ -5,6 +5,7 @@
 :root {
   --background: 0 0% 100%;
   --foreground: 20 14.3% 4.1%;
+<<<<<<< HEAD
   --card: 0 0% 100%;
   --card-foreground: 20 14.3% 4.1%;
   --popover: 0 0% 100%;
@@ -61,4 +62,11 @@
   body {
     @apply bg-background text-foreground;
   }
+=======
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+>>>>>>> 816cf2c (fix: resolve build errors for Vercel deployment)
 }

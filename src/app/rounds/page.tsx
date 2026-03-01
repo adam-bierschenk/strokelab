@@ -1,17 +1,36 @@
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
+import { supabase } from '@/lib/supabase'
 import { Round, Course } from '@prisma/client'
 
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-
-// Types
 interface RoundWithCourse extends Round {
   course: Course
 }
 
-// Format date helper
-function formatDate(date: Date): string {
+async function getRounds(): Promise<RoundWithCourse[]> {
+  const { data: rounds, error } = await supabase
+    .from('Round')
+    .select(`
+      *,
+      Courses (
+        name,
+        par,
+        location
+      )
+    `)
+    .order('date', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching rounds:', error)
+    return []
+  }
+
+  return rounds?.map((r: any) => ({
+    ...r,
+    course: r.Courses?.[0] || { name: 'Unknown', par: 72, location: '' }
+  })) || []
+}
+
+function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -19,7 +38,6 @@ function formatDate(date: Date): string {
   })
 }
 
-// Format score helper (vs par)
 function formatScore(score: number, par: number): { text: string; className: string } {
   const diff = score - par
   if (diff < 0) {
@@ -31,25 +49,11 @@ function formatScore(score: number, par: number): { text: string; className: str
   }
 }
 
-// Fetch rounds from database
-async function getRounds(): Promise<RoundWithCourse[]> {
-  const rounds = await prisma.round.findMany({
-    include: {
-      course: true
-    },
-    orderBy: {
-      date: 'desc'
-    }
-  })
-  return rounds
-}
-
 export default async function RoundsPage() {
   const rounds = await getRounds()
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -67,7 +71,6 @@ export default async function RoundsPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {rounds.length === 0 ? (
           <div className="text-center py-16">
@@ -87,7 +90,6 @@ export default async function RoundsPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Stats Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <StatCard
                 label="Total Rounds"
@@ -105,13 +107,12 @@ export default async function RoundsPage() {
                 icon="📊"
               />
               <StatCard
-                label="Avg Putts"
-                value={rounds[0]?.totalPutts ? Math.round(rounds.reduce((sum, r) => sum + (r.totalPutts || 0), 0) / rounds.length * 10) / 10 : '-'}
-                icon="⛳"
+                label="Total"
+                value={Math.round(rounds.reduce((sum, r) => sum + r.totalScore, 0) / rounds.length * 10) / 10}
+                icon="📊"
               />
             </div>
 
-            {/* Rounds List */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
                 <h2 className="text-sm font-medium text-gray-700">Recent Rounds</h2>
@@ -139,7 +140,7 @@ export default async function RoundsPage() {
                                   {round.course.name}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {round.course.city}, {round.course.state} • {formatDate(round.date)}
+                                  {round.course.location || ''} • {formatDate(round.date)}
                                 </p>
                               </div>
                             </div>
@@ -163,41 +164,6 @@ export default async function RoundsPage() {
                             </svg>
                           </div>
                         </div>
-                        {/* Quick Stats Row */}
-                        <div className="mt-2 flex items-center text-xs text-gray-500 space-x-4">
-                          {round.totalPutts !== null && round.totalPutts !== undefined && (
-                            <span className="flex items-center">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="10" strokeWidth={2} />
-                              </svg>
-                              {round.totalPutts} putts
-                            </span>
-                          )}
-                          {round.fairwaysHit !== null && round.fairwaysHit !== undefined && (
-                            <span className="flex items-center">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                              </svg>
-                              {round.fairwaysHit}/14 fairways
-                            </span>
-                          )}
-                          {round.greensInReg !== null && round.greensInReg !== undefined && (
-                            <span className="flex items-center">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7l8-4 8 4v14M8 21V11h8v10" />
-                              </svg>
-                              {round.greensInReg}/18 GIR
-                            </span>
-                          )}
-                          {round.notes && (
-                            <span className="flex items-center italic">
-                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Has notes
-                            </span>
-                          )}
-                        </div>
                       </div>
                     </Link>
                   )
@@ -211,7 +177,6 @@ export default async function RoundsPage() {
   )
 }
 
-// Stat Card Component
 function StatCard({ label, value, icon }: { label: string; value: number | string; icon: string }) {
   return (
     <div className="bg-white rounded-lg shadow p-4">

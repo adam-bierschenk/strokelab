@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { prisma } from '@/lib/prisma'
+import prisma from '@/lib/prisma'
 import { Course, Hole } from '@prisma/client'
 
 interface CourseWithHoles extends Course {
@@ -35,8 +35,8 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
   const backNine = course.holes.filter(h => h.number > 9)
   const frontPar = frontNine.reduce((sum, h) => sum + h.par, 0)
   const backPar = backNine.reduce((sum, h) => sum + h.par, 0)
-  const frontYards = frontNine.reduce((sum, h) => sum + (h.yards || 0), 0)
-  const backYards = backNine.reduce((sum, h) => sum + (h.yards || 0), 0)
+  const frontYards = frontNine.reduce((sum, h) => sum + (h.yardage || 0), 0)
+  const backYards = backNine.reduce((sum, h) => sum + (h.yardage || 0), 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,7 +54,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{course.name}</h1>
-              <p className="text-sm text-gray-600">{course.city}, {course.state}</p>
+              <p className="text-sm text-gray-600">{course.location}</p>
             </div>
           </div>
         </div>
@@ -63,22 +63,18 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Course Info Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-4 text-center">
             <p className="text-xs text-gray-500 uppercase tracking-wider">Par</p>
             <p className="text-2xl font-bold text-gray-900">{course.par}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Yards</p>
-            <p className="text-2xl font-bold text-gray-900">{course.totalYards?.toLocaleString() || '-'}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Location</p>
+            <p className="text-2xl font-bold text-gray-900">{course.location || '-'}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Rating</p>
-            <p className="text-2xl font-bold text-gray-900">{course.rating || '-'}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Slope</p>
-            <p className="text-2xl font-bold text-gray-900">{course.slope || '-'}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Holes</p>
+            <p className="text-2xl font-bold text-gray-900">{course.holes.length}</p>
           </div>
         </div>
 
@@ -111,7 +107,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <tr className="bg-white">
                   <td className="px-3 py-2 text-xs text-gray-500">Yards</td>
                   {frontNine.map(h => (
-                    <td key={`yards-${h.id}`} className="px-2 py-2 text-center text-sm text-gray-900">{h.yards || '-'}</td>
+                    <td key={`yards-${h.id}`} className="px-2 py-2 text-center text-sm text-gray-900">{h.yardage || '-'}</td>
                   ))}
                   <td className="px-3 py-2 text-center text-sm font-bold text-gray-900 bg-gray-100">{frontYards || '-'}</td>
                 </tr>
@@ -149,7 +145,7 @@ export default async function CourseDetailPage({ params }: CourseDetailPageProps
                 <tr className="bg-white">
                   <td className="px-3 py-2 text-xs text-gray-500">Yards</td>
                   {backNine.map(h => (
-                    <td key={`yards-${h.id}`} className="px-2 py-2 text-center text-sm text-gray-900">{h.yards || '-'}</td>
+                    <td key={`yards-${h.id}`} className="px-2 py-2 text-center text-sm text-gray-900">{h.yardage || '-'}</td>
                   ))}
                   <td className="px-3 py-2 text-center text-sm font-bold text-gray-900 bg-gray-100">{backYards || '-'}</td>
                 </tr>

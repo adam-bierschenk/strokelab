@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { updateRound } from '@/app/actions/rounds'
-import { prisma } from '@/lib/prisma'
 import { Round, Course } from '@prisma/client'
 
 interface RoundWithCourse extends Round {
@@ -23,8 +22,6 @@ export default function EditRoundForm({ round }: EditRoundFormProps) {
   const [formData, setFormData] = useState({
     totalScore: round.totalScore,
     totalPutts: round.totalPutts ?? '',
-    fairwaysHit: round.fairwaysHit ?? '',
-    greensInReg: round.greensInReg ?? '',
     notes: round.notes ?? ''
   })
 
@@ -39,8 +36,6 @@ export default function EditRoundForm({ round }: EditRoundFormProps) {
         userId: round.userId,
         totalScore: Number(formData.totalScore),
         totalPutts: formData.totalPutts ? Number(formData.totalPutts) : undefined,
-        fairwaysHit: formData.fairwaysHit ? Number(formData.fairwaysHit) : undefined,
-        greensInReg: formData.greensInReg ? Number(formData.greensInReg) : undefined,
         notes: formData.notes || undefined
       })
 
@@ -50,7 +45,7 @@ export default function EditRoundForm({ round }: EditRoundFormProps) {
         router.push(`/rounds/${round.id}`)
         router.refresh()
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setIsSubmitting(false)
@@ -108,42 +103,6 @@ export default function EditRoundForm({ round }: EditRoundFormProps) {
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm px-3 py-2 border"
             />
             <p className="mt-1 text-xs text-gray-500">Total putts for 18 holes</p>
-          </div>
-
-          <div>
-            <label htmlFor="fairwaysHit" className="block text-sm font-medium text-gray-700 mb-2">
-              Fairways Hit
-            </label>
-            <input
-              type="number"
-              id="fairwaysHit"
-              name="fairwaysHit"
-              min="0"
-              max="14"
-              value={formData.fairwaysHit}
-              onChange={handleChange}
-              placeholder="e.g., 8"
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm px-3 py-2 border"
-            />
-            <p className="mt-1 text-xs text-gray-500">Out of 14 possible (excluding par 3s)</p>
-          </div>
-
-          <div>
-            <label htmlFor="greensInReg" className="block text-sm font-medium text-gray-700 mb-2">
-              Greens in Regulation
-            </label>
-            <input
-              type="number"
-              id="greensInReg"
-              name="greensInReg"
-              min="0"
-              max="18"
-              value={formData.greensInReg}
-              onChange={handleChange}
-              placeholder="e.g., 12"
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm px-3 py-2 border"
-            />
-            <p className="mt-1 text-xs text-gray-500">Out of 18 greens</p>
           </div>
         </div>
       </div>

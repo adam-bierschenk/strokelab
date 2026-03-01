@@ -43,8 +43,11 @@ async function main() {
   })
 
   console.log(`Created course: ${whiteEagle.name}`)
+<<<<<<< HEAD
   console.log(`  - ${whiteEagle.holes.length} holes`)
   console.log(`  - Par ${whiteEagle.par}`)
+=======
+>>>>>>> 816cf2c (fix: resolve build errors for Vercel deployment)
 
   // Additional sample courses for variety
   const courses = [

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { prisma } from '@/lib/prisma'
+import { supabase } from '@/lib/supabase'
 import { Course, Hole } from '@prisma/client'
 
 interface CourseWithHoles extends Course {
@@ -7,19 +7,20 @@ interface CourseWithHoles extends Course {
 }
 
 async function getCourses(): Promise<CourseWithHoles[]> {
-  const courses = await prisma.course.findMany({
-    include: {
-      holes: {
-        orderBy: { number: 'asc' }
-      }
-    },
-    orderBy: { name: 'asc' }
-  })
-  return courses
-}
+  const { data: courses, error } = await supabase
+    .from('Courses')
+    .select(`
+      *,
+      holes:Holes(*)
+    `)
+    .order('name', { ascending: true })
 
-function formatNumber(num: number): string {
-  return num.toLocaleString()
+  if (error) {
+    console.error('Error fetching courses:', error)
+    return []
+  }
+
+  return courses || []
 }
 
 export default async function CoursesPage() {
@@ -53,7 +54,7 @@ export default async function CoursesPage() {
                       {course.name}
                     </h2>
                     <p className="text-sm text-gray-600 mt-1">
-                      {course.city}, {course.state}
+                      {course.location}
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -63,39 +64,16 @@ export default async function CoursesPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+                <div className="mt-4 grid grid-cols-2 gap-4 text-center">
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-gray-500 uppercase tracking-wider">Par</p>
                     <p className="text-lg font-bold text-gray-900">{course.par}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider">Yards</p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {course.totalYards ? formatNumber(course.totalYards) : '-'}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-gray-500 uppercase tracking-wider">Holes</p>
-                    <p className="text-lg font-bold text-gray-900">{course.holes.length}</p>
+                    <p className="text-lg font-bold text-gray-900">{course.holes?.length || 0}</p>
                   </div>
                 </div>
-
-                {(course.rating || course.slope) && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
-                      </svg>
-                      Rating: {course.rating || '-'}
-                    </div>
-                    <div className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                      Slope: {course.slope || '-'}
-                    </div>
-                  </div>
-                )}
               </div>
             </Link>
           ))}
