@@ -26,7 +26,7 @@ export async function savePushSubscription(subscription: PushSubscriptionData) {
   }
 
   const { data, error } = await supabase
-    .from('PushSubscription')
+    .from('push_subscriptions')
     .insert({
       userId: user.id,
       endpoint: subscription.endpoint,
@@ -53,7 +53,7 @@ export async function deletePushSubscription(endpoint: string) {
   }
 
   const { error } = await supabase
-    .from('PushSubscription')
+    .from('push_subscriptions')
     .delete()
     .eq('userId', user.id)
     .eq('endpoint', endpoint)
@@ -77,7 +77,7 @@ export async function getNotificationPreferences(): Promise<{
   }
 
   const { data, error } = await supabase
-    .from('NotificationPreferences')
+    .from('notification_preferences')
     .select('*')
     .eq('userId', user.id)
     .single()
@@ -113,7 +113,7 @@ export async function updateNotificationPreferences(
 
   // Check if preferences exist
   const { data: existing } = await supabase
-    .from('NotificationPreferences')
+    .from('notification_preferences')
     .select('id')
     .eq('userId', user.id)
     .single()
@@ -121,7 +121,7 @@ export async function updateNotificationPreferences(
   if (existing) {
     // Update
     const { error } = await supabase
-      .from('NotificationPreferences')
+      .from('notification_preferences')
       .update({
         ...preferences,
         updatedAt: new Date().toISOString()
@@ -134,7 +134,7 @@ export async function updateNotificationPreferences(
   } else {
     // Insert
     const { error } = await supabase
-      .from('NotificationPreferences')
+      .from('notification_preferences')
       .insert({
         userId: user.id,
         ...preferences,

@@ -121,7 +121,7 @@ export async function bookTeeTime(teeTimeId: string, players: number) {
   
   // Create booking in database
   const { data: booking, error } = await supabase
-    .from('Booking')
+    .from('bookings')
     .insert({
       userId: user.id,
       teeTimeId: teeTime.id,
@@ -155,7 +155,7 @@ export async function getMyBookings() {
   }
   
   const { data: bookings, error } = await supabase
-    .from('Booking')
+    .from('bookings')
     .select('*')
     .eq('userId', user.id)
     .order('date', { ascending: true })
@@ -178,7 +178,7 @@ export async function cancelBooking(bookingId: string) {
   
   // Verify ownership
   const { data: booking } = await supabase
-    .from('Booking')
+    .from('bookings')
     .select('userId')
     .eq('id', bookingId)
     .single()
@@ -188,7 +188,7 @@ export async function cancelBooking(bookingId: string) {
   }
   
   const { error } = await supabase
-    .from('Booking')
+    .from('bookings')
     .update({ status: 'cancelled' })
     .eq('id', bookingId)
   
