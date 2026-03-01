@@ -329,16 +329,16 @@ export default async function DashboardPage() {
                   </h3>
                   <div className="space-y-3">
                     <Link
-                      href="/tee-times"
+                      href="/rounds/new"
                       className="block w-full text-center py-2 px-4 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
                     >
-                      Book Tee Time
+                      Log New Round
                     </Link>
                     <Link
-                      href="/rounds/new"
+                      href="/rounds"
                       className="block w-full text-center py-2 px-4 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors"
                     >
-                      Log Round
+                      View Round History
                     </Link>
                     <Link
                       href="/goals"
@@ -347,16 +347,10 @@ export default async function DashboardPage() {
                       View Goals
                     </Link>
                     <Link
-                      href="/family"
-                      className="block w-full text-center py-2 px-4 bg-blue-100 text-blue-700 text-sm font-medium rounded-md hover:bg-blue-200 transition-colors"
-                    >
-                      Family Groups
-                    </Link>
-                    <Link
-                      href="/stats"
+                      href="/export"
                       className="block w-full text-center py-2 px-4 bg-purple-100 text-purple-700 text-sm font-medium rounded-md hover:bg-purple-200 transition-colors"
                     >
-                      Advanced Stats
+                      Export Data
                     </Link>
                   </div>
                 </div>
