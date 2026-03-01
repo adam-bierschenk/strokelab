@@ -262,6 +262,12 @@ export default async function DashboardPage() {
                     >
                       View Round History
                     </Link>
+                    <Link
+                      href="/goals"
+                      className="block w-full text-center py-2 px-4 bg-blue-100 text-blue-700 text-sm font-medium rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                      View Goals
+                    </Link>
                   </div>
                 </div>
 

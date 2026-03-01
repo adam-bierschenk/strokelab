@@ -30,3 +30,23 @@ export interface Score {
   score: number
   putts: number
 }
+
+export interface Goal {
+  id: string
+  userId: string
+  type: 'SCORE_AVG' | 'ROUNDS_COUNT' | 'FAIRWAY_PCT' | 'GIR_PCT' | 'PUTTS_AVG'
+  title: string
+  description?: string
+  targetValue: number
+  currentValue: number
+  deadline?: string
+  status: 'active' | 'completed' | 'failed'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface GoalProgress {
+  goal: Goal
+  percentage: number
+  trend: 'up' | 'down' | 'stable'
+}
