@@ -1,3 +1,5 @@
+import withPWA from 'next-pwa'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Image optimization
@@ -85,4 +87,73 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+// PWA Configuration
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  buildExcludes: [/middleware-manifest\.json$/],
+  publicExcludes: ['!noprecache/**/*'],
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/[^/]+\/_next\/static\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'static-files',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/[^/]+\/_next\/image\?.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'next-image',
+        expiration: {
+          maxEntries: 60,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+      },
+    },
+    {
+      urlPattern: /\/_next\/data\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'next-data',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+      },
+    },
+    {
+      urlPattern: /\/api\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'api-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 60 * 60, // 1 hour
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+    {
+      urlPattern: /^https:\/\/[^/]+\/(?!api|_next|static).*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pages',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+  ],
+})(nextConfig)
+
+export default pwaConfig

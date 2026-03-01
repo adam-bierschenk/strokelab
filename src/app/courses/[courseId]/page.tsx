@@ -2,6 +2,14 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import WeatherWidget from '@/components/WeatherWidget'
+
+interface HoleData {
+  id: string
+  holeNumber: number
+  par: number
+  length?: number
+}
 
 export const metadata: Metadata = {
   title: 'Course Details | StrokeLab',
@@ -33,7 +41,8 @@ async function getCourse(courseId: string) {
     return null
   }
 
-  const { data: stats, error: statsError } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { data: stats, error: _statsError } = await supabase
     .from('Round')
     .select('id, totalScore')
     .eq('courseId', courseId)
@@ -45,6 +54,7 @@ async function getCourse(courseId: string) {
 
   return {
     ...course,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     holes: course.holes?.sort((a: any, b: any) => a.holeNumber - b.holeNumber) || [],
     bestScore
   }
@@ -62,9 +72,11 @@ export default async function CourseDetailsPage({ params }: Props) {
     notFound()
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const totalLength = course.holes.reduce((sum: number, h: any) => sum + (h.length || 0), 0)
-  const avgHoleLength = course.holes.length > 0 
-    ? Math.round(totalLength / course.holes.length) 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _avgHoleLength = course.holes.length > 0
+    ? Math.round(totalLength / course.holes.length)
     : 0
 
   return (
@@ -118,6 +130,16 @@ export default async function CourseDetailsPage({ params }: Props) {
           </div>
         </div>
 
+        {/* Weather Widget */}
+        {course.lat && course.lon && (
+          <WeatherWidget 
+            lat={course.lat} 
+            lon={course.lon} 
+            courseName={course.name}
+            showForecast={true}
+          />
+        )}
+
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Hole Details</h2>
@@ -127,6 +149,7 @@ export default async function CourseDetailsPage({ params }: Props) {
               <p className="px-6 py-4 text-gray-600">No hole details available</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {course.holes.map((hole: any) => (
                   <div key={hole.id} className="px-6 py-4">
                     <div className="flex items-center justify-between">

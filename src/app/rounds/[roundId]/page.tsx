@@ -3,6 +3,13 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import DeleteRoundButton from './DeleteRoundButton'
+import PhotoUpload from '@/components/PhotoUpload'
+
+interface ScoreData {
+  fairway?: boolean
+  greenInReg?: boolean
+  putts?: number
+}
 
 export const metadata: Metadata = {
   title: 'Round Details | StrokeLab',
@@ -41,9 +48,16 @@ async function getRound(roundId: string) {
     `)
     .eq('roundId', roundId)
 
+  const { data: photos } = await supabase
+    .from('Photo')
+    .select('*')
+    .eq('roundId', roundId)
+    .order('createdAt', { ascending: false })
+
   return {
     ...round,
     scores: scores || [],
+    photos: photos || [],
     isOwner: round.userId === user.id
   }
 }
@@ -60,9 +74,9 @@ export default async function RoundDetailPage({ params }: RoundPageProps) {
     notFound()
   }
 
-  const fairwaysHit = round.scores.filter((s: any) => s.fairway).length
-  const greensInReg = round.scores.filter((s: any) => s.greenInReg).length
-  const totalPutts = round.scores.reduce((sum: number, s: any) => sum + (s.putts || 0), 0)
+  const fairwaysHit = round.scores.filter((s: ScoreData) => s.fairway).length
+  const greensInReg = round.scores.filter((s: ScoreData) => s.greenInReg).length
+  const totalPutts = round.scores.reduce((sum: number, s: ScoreData) => sum + (s.putts || 0), 0)
   const toPar = round.totalScore - round.course.par
 
   return (
@@ -129,6 +143,15 @@ export default async function RoundDetailPage({ params }: RoundPageProps) {
             <p className="text-gray-600 whitespace-pre-wrap">{round.notes}</p>
           </div>
         )}
+        <!-- Photos Section -->
+        <div className="bg-white rounded-lg shadow p-6 mt-6">
+          <h3 className="text-lg font-medium mb-4">Photos</h3>
+          <PhotoUpload 
+            roundId={roundId} 
+            existingPhotos={round.photos || []} 
+          />
+        </div>
+
       </main>
     </div>
   )

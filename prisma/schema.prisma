@@ -46,6 +46,9 @@ model User {
   accounts      Account[]
   sessions      Session[]
   rounds        Round[]
+  lessonNotes   LessonNote[]
+  createdFamilies FamilyGroup[] @relation("CreatedFamilies")
+  familyMemberships FamilyMember[]
 
   @@map("users")
 }
@@ -105,6 +108,10 @@ model Round {
   greensInReg Int?     @map("greens_in_reg") // Number of greens in regulation
   notes       String?
   scores      Score[]
+  strokesGained StrokesGained[]
+  // Family support: if entered on behalf of another family member
+  enteredById String?  @map("entered_by_id")
+  visibility  String   @default("private") @map("visibility") // 'private', 'family', 'public'
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -124,4 +131,60 @@ model Score {
 
   @@unique([roundId, holeId])
   @@map("scores")
+}
+
+model FamilyGroup {
+  id          String   @id @default(cuid())
+  name        String
+  createdById String   @map("created_by_id")
+  createdBy   User     @relation("CreatedFamilies", fields: [createdById], references: [id], onDelete: Cascade)
+  members     FamilyMember[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("family_groups")
+}
+
+model FamilyMember {
+  id            String      @id @default(cuid())
+  familyGroupId String      @map("family_group_id")
+  familyGroup   FamilyGroup @relation(fields: [familyGroupId], references: [id], onDelete: Cascade)
+  userId        String      @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          String      @default("member") // 'admin', 'member', 'child'
+  joinedAt      DateTime    @default(now()) @map("joined_at")
+
+  @@unique([familyGroupId, userId])
+  @@map("family_members")
+}
+
+model LessonNote {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  content     String   @db.Text
+  category    String   // e.g., "swing", "putting", "course_management"
+  coachName   String?  @map("coach_name")
+  sharedWith  String[] @default([]) @map("shared_with") // Array of userIds
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("lesson_notes")
+}
+
+model StrokesGained {
+  id               String   @id @default(cuid())
+  roundId          String   @map("round_id")
+  round            Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  total            Float    // Total strokes gained for the round
+  offTheTee        Float    @map("off_the_tee") // SG:OTT - drives and par 3 tee shots
+  approach         Float    // SG:APP - approach shots (150+ yards from fairway/rough)
+  aroundGreen      Float    @map("around_green") // SG:ARG - short game (under 30 yards)
+  putting          Float    // SG:P - putting
+  calculatedAt     DateTime @default(now()) @map("calculated_at")
+  
+  @@index([roundId])
+  @@map("strokes_gained")
 }
