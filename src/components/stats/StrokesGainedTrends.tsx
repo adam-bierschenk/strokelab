@@ -75,8 +75,7 @@ export function StrokesGainedTrends({ data }: StrokesGainedTrendsProps) {
             return (
               <div key={cat.key} className="bg-gray-50 rounded-lg p-4">
                 <p className="text-xs text-gray-500 mb-1">{cat.label}</p>
-                <p className={`text-lg font-semibold ${avg >= 0 ? 'text-green-600' : 'text-red-500'}`}
-003e
+                <p className={`text-lg font-semibold ${avg >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                   {avg > 0 ? '+' : ''}{avg.toFixed(2)}
                 </p>
                 <p className="text-xs text-gray-400">per round avg</p>

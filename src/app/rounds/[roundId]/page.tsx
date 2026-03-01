@@ -143,7 +143,7 @@ export default async function RoundDetailPage({ params }: RoundPageProps) {
             <p className="text-gray-600 whitespace-pre-wrap">{round.notes}</p>
           </div>
         )}
-        <!-- Photos Section -->
+        {/* Photos Section */}
         <div className="bg-white rounded-lg shadow p-6 mt-6">
           <h3 className="text-lg font-medium mb-4">Photos</h3>
           <PhotoUpload 

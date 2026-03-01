@@ -361,6 +361,4 @@ export async function getUserStrokesGainedStats(): Promise<{
   }
 }
 
-function roundStrokesGained(value: number): number {
-  return Math.round(value * 100) / 100
-}
+

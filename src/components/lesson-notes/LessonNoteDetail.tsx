@@ -159,28 +159,23 @@ export function LessonNoteDetail({ note, isOwner }: LessonNoteDetailProps) {
 
           {note.sharedWith.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm text-gray-500 mb-2">Shared with:{note.sharedWith.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm text-gray-500 mb-2">Shared with:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {note.sharedWith.map((userId) => (
-                      <div key={userId} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
-                        <span>User {userId.slice(0, 8)}...</span>
-                        <button
-                          onClick={() => handleUnshare(userId)}
-                          className="text-blue-400 hover:text-blue-800"
-                          title="Remove sharing"
-                        >
-                          <span className="sr-only">Unshare</span>
-                          ×
-                        </button>
-                      </div>
-                    ))}
+              <p className="text-sm text-gray-500 mb-2">Shared with:</p>
+              <div className="flex flex-wrap gap-2">
+                {note.sharedWith.map((userId) => (
+                  <div key={userId} className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-sm">
+                    <span>User {userId.slice(0, 8)}...</span>
+                    <button
+                      onClick={() => handleUnshare(userId)}
+                      className="text-blue-400 hover:text-blue-800"
+                      title="Remove sharing"
+                    >
+                      <span className="sr-only">Unshare</span>
+                      ×
+                    </button>
                   </div>
-                </div>
-              )}
-              </div
-            >
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}

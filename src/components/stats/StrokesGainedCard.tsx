@@ -23,7 +23,7 @@ export function StrokesGainedCard({ title, data, highlight = false }: StrokesGai
     return 'bg-red-400'
   }
 
-  const getBarWidth = (value: number): string = {
+  const getBarWidth = (value: number): string => {
     // Map -1 to +1 range to percentage
     const clamped = Math.max(-1, Math.min(1, value))
     return `${Math.abs(clamped) * 100}%`

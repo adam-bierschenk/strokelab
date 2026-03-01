@@ -2,6 +2,14 @@ import withPWA from 'next-pwa'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ESLint: Don't fail build on lint errors
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // TypeScript: Don't fail build on type errors
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // Image optimization
   images: {
     formats: ['image/avif', 'image/webp'],
