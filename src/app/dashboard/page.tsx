@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase'
 import SignOutButton from '@/components/SignOutButton'
 import { createClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import ScoreTrendChart from '@/components/charts/ScoreTrendChart'
+import AvgByCourseChart from '@/components/charts/AvgByCourseChart'
+import PuttsTrendChart from '@/components/charts/PuttsTrendChart'
 
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
@@ -22,6 +25,24 @@ interface UserStats {
     courseName: string
     coursePar: number
     date: string
+  }>
+  // Chart data
+  scoreTrendData: Array<{
+    date: string
+    score: number
+    par: number
+    course: string
+  }>
+  courseAvgData: Array<{
+    name: string
+    avgScore: number
+    rounds: number
+    par: number
+  }>
+  puttsTrendData: Array<{
+    date: string
+    putts: number
+    course: string
   }>
 }
 
@@ -51,7 +72,10 @@ async function getDashboardStats(): Promise<UserStats> {
       avgPutts: null,
       fairwayPercentage: null,
       girPercentage: null,
-      recentRounds: []
+      recentRounds: [],
+      scoreTrendData: [],
+      courseAvgData: [],
+      puttsTrendData: []
     }
   }
 
@@ -74,6 +98,46 @@ async function getDashboardStats(): Promise<UserStats> {
     date: r.date
   }))
 
+  // Chart data: score trend (last 20 rounds)
+  const scoreTrendData = [...rounds]
+    .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-20)
+    .map((r: any) => ({
+      date: r.date,
+      score: r.totalScore,
+      par: (r.Courses as any)?.[0]?.par || 72,
+      course: (r.Courses as any)?.[0]?.name || 'Unknown'
+    }))
+
+  // Chart data: course averages
+  const courseStats: Record<string, { total: number; count: number; par: number }> = {}
+  rounds.forEach((r: any) => {
+    const name = (r.Courses as any)?.[0]?.name || 'Unknown'
+    const par = (r.Courses as any)?.[0]?.par || 72
+    if (!courseStats[name]) {
+      courseStats[name] = { total: 0, count: 0, par }
+    }
+    courseStats[name].total += r.totalScore
+    courseStats[name].count += 1
+  })
+  const courseAvgData = Object.entries(courseStats).map(([name, stats]) => ({
+    name,
+    avgScore: Math.round((stats.total / stats.count) * 10) / 10,
+    rounds: stats.count,
+    par: stats.par
+  })).sort((a, b) => b.rounds - a.rounds)
+
+  // Chart data: putts trend
+  const puttsTrendData = rounds
+    .filter((r: any) => r.totalPutts !== null)
+    .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-20)
+    .map((r: any) => ({
+      date: r.date,
+      putts: r.totalPutts,
+      course: (r.Courses as any)?.[0]?.name || 'Unknown'
+    }))
+
   return {
     totalRounds,
     bestScore,
@@ -82,7 +146,10 @@ async function getDashboardStats(): Promise<UserStats> {
     avgPutts,
     fairwayPercentage: null,
     girPercentage: null,
-    recentRounds
+    recentRounds,
+    scoreTrendData,
+    courseAvgData,
+    puttsTrendData
   }
 }
 
@@ -195,6 +262,17 @@ export default async function DashboardPage() {
                 icon="🟢"
               />
             </div>
+
+            {/* Charts Grid */}
+            {stats.totalRounds >= 2 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <ScoreTrendChart data={stats.scoreTrendData} />
+                <AvgByCourseChart data={stats.courseAvgData} />
+                {(stats.puttsTrendData?.length ?? 0) >= 2 && (
+                  <PuttsTrendChart data={stats.puttsTrendData} />
+                )}
+              </div>
+            )}
 
             {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
